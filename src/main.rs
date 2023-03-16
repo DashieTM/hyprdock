@@ -21,6 +21,7 @@ use std::{
     os::unix::net::{UnixListener, UnixStream},
     process::{Command, Output},
     thread,
+    time::Duration,
 };
 
 fn main() {
@@ -33,24 +34,47 @@ fn main() {
         "mirror" => mirror_monitor(),
         "internal" => internal_monitor(),
         "external" => external_monitor(),
-        _ => socket_connect(),
+        "server" => socket_connect(),
+        _ => print!(
+            "Could not parse argument.\n
+            Possible arguments are:\n
+            extend\n
+            mirror\n
+            internal\n
+            external\n
+            server\n"
+        ),
     }
 }
 
 fn handle_close() {
     if has_external_monitor() {
         external_monitor();
-    } else if !is_charging() {
+        thread::sleep(Duration::from_millis(1000));
+        restart_hyprpaper();
+        restart_eww_bar();
+    } else {
         stop_music();
         lock_system();
     }
 }
 
 fn handle_open() {
-    if has_external_monitor() {
-        extend_monitor();
-    } else if !is_internal_active() {
+    if is_internal_active() {
+        return;
+    }
+    if !has_external_monitor() {
         internal_monitor();
+        restart_hyprpaper();
+        restart_eww_bar();
+        fix_eww_bar();
+        return;
+    } else {
+        internal_monitor();
+        extend_monitor();
+        restart_hyprpaper();
+        restart_eww_bar();
+        fix_eww_bar();
     }
 }
 
@@ -75,7 +99,7 @@ fn socket_connect() {
 }
 
 fn lock_system() {
-    Command::new("waylock")
+    Command::new("swaylock")
         .arg("-c")
         .arg("000000")
         .output()
@@ -96,6 +120,9 @@ fn stop_music() {
 }
 
 fn extend_monitor() {
+    if !is_internal_active() {
+        restart_internal();
+    }
     Command::new("hyprctl")
         .arg("keyword")
         .arg("monitor")
@@ -106,6 +133,9 @@ fn extend_monitor() {
 }
 
 fn mirror_monitor() {
+    if !is_internal_active() {
+        restart_internal();
+    }
     Command::new("hyprctl")
         .arg("keyword")
         .arg("monitor")
@@ -116,6 +146,7 @@ fn mirror_monitor() {
 }
 
 fn internal_monitor() {
+    let needs_restart = !is_internal_active();
     Command::new("hyprctl")
         .arg("keyword")
         .arg("monitor")
@@ -128,9 +159,26 @@ fn internal_monitor() {
         .arg(",disabled")
         .output()
         .expect("Failed to disable external monitor");
+    if needs_restart {
+        restart_eww_bar();
+        restart_hyprpaper();
+    }
+}
+
+fn restart_internal() {
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg("eDP-1,highrr,0x0,1")
+        .output()
+        .expect("Failed to enable internal monitor");
+    restart_hyprpaper();
+    restart_eww_bar();
+    fix_eww_bar();
 }
 
 fn external_monitor() {
+    let needs_restart = !is_internal_active();
     Command::new("hyprctl")
         .arg("keyword")
         .arg("monitor")
@@ -143,6 +191,38 @@ fn external_monitor() {
         .arg("eDP-1,disabled")
         .output()
         .expect("Failed to disable internal monitor");
+    if needs_restart {
+        restart_eww_bar();
+        restart_hyprpaper();
+    }
+}
+
+fn restart_hyprpaper() {
+    Command::new("hyprctl")
+        .arg("dispatch")
+        .arg("exec")
+        .arg("hyprpaper")
+        .output()
+        .expect("Could not restart hyprpaper");
+}
+
+fn restart_eww_bar() {
+    Command::new("eww")
+        .arg("close-all")
+        .output()
+        .expect("could not close eww windows");
+    Command::new("eww")
+        .arg("open")
+        .arg("bar")
+        .output()
+        .expect("Could not open eww bar");
+}
+
+fn fix_eww_bar() {
+    Command::new("eww")
+        .arg("reload")
+        .output()
+        .expect("pingpang");
 }
 
 fn is_charging() -> bool {
@@ -166,9 +246,9 @@ fn is_internal_active() -> bool {
     )
     .unwrap();
     if output.contains("eDP-1") {
-        return false;
+        return true;
     }
-    true
+    false
 }
 
 fn has_external_monitor() -> bool {
@@ -181,7 +261,7 @@ fn has_external_monitor() -> bool {
     )
     .unwrap();
     if output.contains("ID 1") {
-        return false;
+        return true;
     }
-    true
+    false
 }
