@@ -15,7 +15,6 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 use std::{
     env, fs,
     io::Read,
@@ -41,7 +40,7 @@ fn main() {
 fn handle_close() {
     if has_external_monitor() {
         external_monitor();
-    } else if is_charging() {
+    } else if !is_charging() {
         stop_music();
         lock_system();
     }
@@ -56,13 +55,10 @@ fn handle_open() {
 }
 
 fn handle_event(event: &str) {
-    println!("{event}");
     match event {
         "button/lid LID close\n" => handle_close(),
         "button/lid LID open\n" => handle_open(),
-        _ => {
-            println!("at least here")
-        }
+        _ => {}
     }
 }
 
@@ -79,49 +75,74 @@ fn socket_connect() {
 }
 
 fn lock_system() {
-    Command::new("sh")
-        .arg("swaylock -c 000000 & systemctl suspend")
+    Command::new("waylock")
+        .arg("-c")
+        .arg("000000")
         .output()
         .expect("Failed to lock screen");
+    Command::new("systemctl")
+        .arg("suspend")
+        .output()
+        .expect("Failed to suspend");
 }
 
 fn stop_music() {
-    Command::new("sh")
-        .arg("playerctl --all-players -a pause")
+    Command::new("playerctl")
+        .arg("--all-players")
+        .arg("-a")
+        .arg("pause")
         .output()
         .expect("Failed to pause music players");
 }
 
 fn extend_monitor() {
-    Command::new("sh")
-        .arg("hyprctl keyword ,highrr,1920x0,1")
-        .arg("hyprctl keyword eDP-1,1920x1080@144,0x0,1")
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg(",highrr,1920x0,1")
         .output()
         .expect("Failed to extend Monitors");
+    // .arg("hyprctl keyword eDP-1,1920x1080@144,0x0,1")
 }
 
 fn mirror_monitor() {
-    Command::new("sh")
-        .arg("hyprctl keyword monitor ,highrr,0x0,1")
-        .arg("hyprctl keyword monitor eDP-1,1920x1080@144,0x0,1")
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg(",highrr,auto,1,mirror,eDP-1")
         .output()
         .expect("Failed to mirror Monitors");
+    // .arg("hyprctl keyword monitor eDP-1,1920x1080@144,0x0,1")
 }
 
 fn internal_monitor() {
-    Command::new("sh")
-        .arg("hyprctl keyword monitor ,disabled")
-        .arg("hyprctl keyword monitor eDP-1,1920x1080@144,0x0,1")
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg("eDP-1,highrr,0x0,1")
         .output()
-        .expect("Failed to use only internal monitor");
+        .expect("Failed to enable internal monitor");
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg(",disabled")
+        .output()
+        .expect("Failed to disable external monitor");
 }
 
 fn external_monitor() {
-    Command::new("sh")
-        .arg("hyprctl keyword monitor ,highrr,0x0,1")
-        .arg("hyprctl keyword monitor eDP-1,disabled")
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg(",highrr,0x0,1")
         .output()
-        .expect("Failed to use only external monitor");
+        .expect("Failed to enable external monitor");
+    Command::new("hyprctl")
+        .arg("keyword")
+        .arg("monitor")
+        .arg("eDP-1,disabled")
+        .output()
+        .expect("Failed to disable internal monitor");
 }
 
 fn is_charging() -> bool {
@@ -137,14 +158,14 @@ fn is_charging() -> bool {
 
 fn is_internal_active() -> bool {
     let output = String::from_utf8(
-        Command::new("sh")
-            .arg("hyprctl monitors | rg 'eDP-1'")
+        Command::new("hyprctl")
+            .arg("monitors")
             .output()
             .expect("Failed to use only external monitor")
             .stdout,
     )
     .unwrap();
-    if output == "" {
+    if output.contains("eDP-1") {
         return false;
     }
     true
@@ -152,14 +173,14 @@ fn is_internal_active() -> bool {
 
 fn has_external_monitor() -> bool {
     let output = String::from_utf8(
-        Command::new("sh")
-            .arg("hyprctl monitors | rg 'ID 1'")
+        Command::new("hyprctl")
+            .arg("monitors")
             .output()
             .expect("Failed to use only external monitor")
             .stdout,
     )
     .unwrap();
-    if output == "" {
+    if output.contains("ID 1") {
         return false;
     }
     true
