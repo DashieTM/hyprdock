@@ -27,6 +27,19 @@ use std::{
 fn main() {
     let args: Vec<String> = env::args().collect();
 
+    if args.len() < 2 {
+        print!(
+            "Could not parse argument.
+            Possible arguments are:
+            extend
+            mirror
+            internal
+            external
+            server\n"
+        );
+        return;
+    }
+
     let mode = &args[1];
 
     match mode.as_str() {
@@ -36,12 +49,12 @@ fn main() {
         "external" => external_monitor(),
         "server" => socket_connect(),
         _ => print!(
-            "Could not parse argument.\n
-            Possible arguments are:\n
-            extend\n
-            mirror\n
-            internal\n
-            external\n
+            "Could not parse argument.
+            Possible arguments are:
+            extend
+            mirror
+            internal
+            external
             server\n"
         ),
     }
