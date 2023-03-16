@@ -17,10 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::{
     env, fs,
-    io::{self, BufRead, BufReader, Read},
-    os::unix::net::{UnixListener, UnixStream},
+    io::{self, BufRead, Read},
+    os::unix::net::UnixStream,
     path::PathBuf,
-    process::{Command, Output},
+    process::Command,
     thread,
     time::Duration,
 };
@@ -45,7 +45,7 @@ fn main() {
 
     let dock = HyprDock {
         monitor_name: parse_monitor_name(),
-        bar: String::from(&args[2]), 
+        bar: String::from(&args[2]),
     };
 
     match mode.as_str() {
@@ -274,17 +274,6 @@ impl HyprDock {
             .expect("pingpang");
     }
 
-    pub fn is_charging(&self) -> bool {
-        if String::from(
-            fs::read_to_string("/sys/class/power_supply/BAT0/status")
-                .expect("Should have been able to read the file"),
-        ) == "Charging"
-        {
-            return true;
-        }
-        false
-    }
-
     pub fn is_internal_active(&self) -> bool {
         let output = String::from_utf8(
             Command::new("hyprctl")
@@ -315,3 +304,5 @@ impl HyprDock {
         false
     }
 }
+//#TODO find a way to handle waybar properly
+// one that doesn't require you to use 9999x code duplication
