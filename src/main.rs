@@ -15,15 +15,18 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+use serde_derive::Deserialize;
 use std::{
     env, fs,
     io::{self, BufRead, Read},
     os::unix::net::UnixStream,
     path::PathBuf,
+    process::exit,
     process::Command,
     thread,
     time::Duration,
 };
+use toml;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -34,10 +37,17 @@ fn main() {
 
     let mut dock = HyprDock {
         monitor_name: parse_monitor_name(),
-        bar: None,
+        config: parse_config(
+            home::home_dir()
+                .unwrap()
+                .join(PathBuf::from(".config/hypr/hyprdock.toml"))
+                .to_str()
+                .unwrap(),
+        ),
     };
 
     let mut iter = args.iter();
+    let mut custom_config = false;
     iter.next();
     let mut iteration = 0;
     for _ in 0..args.len() - 1 {
@@ -51,17 +61,18 @@ fn main() {
             "--extend" | "-eo" => dock.extend_monitor(),
             "--mirror" | "-io" => dock.mirror_monitor(),
             "--server" | "-s" => dock.socket_connect(),
+            "--suspend" | "-su" => dock.lock_system(),
             "--version" | "-v" => println!("0.2.1"),
-            "--bar" | "-b" => {
-                dock.bar = {
-                    iteration += 1;
-                    Some(iter.next().unwrap().clone())
-                }
-            }
             "--help" | "-h" => {
                 print_help();
                 return;
             }
+            // "--config" | "-c" => {
+            //     iteration += 1;
+            //     dock.parse_config(iter.next().unwrap());
+            //     custom_config = true;
+            //     ()
+            // }
             x => {
                 println!("Could not parse {}", x);
                 print_help();
@@ -110,12 +121,51 @@ fn parse_monitor_name() -> String {
     panic!("Could not read name for monitor!");
 }
 
+fn parse_config(path: &str) -> Config {
+    let contents = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => {
+            eprintln!("Could not read file `{}`", path);
+            exit(1);
+        }
+    };
+    match toml::from_str(&contents) {
+        Ok(d) => d,
+        Err(_) => {
+            eprintln!("Unable to load data from `{}`", path);
+            exit(1);
+        }
+    }
+}
+
 struct HyprDock {
     pub monitor_name: String,
-    pub bar: Option<String>,
+    pub config: Config,
+}
+
+#[derive(Deserialize)]
+struct Config {
+    open_bar_command: String,
+    close_bar_command: String,
+    reload_bar_command: String,
+    suspend_command: String,
+    lock_command: String,
+    utility_command: String,
 }
 
 impl HyprDock {
+    pub fn execute_command(&self, command: &str) {
+        let command_split: Vec<&str> = command.split(" ").collect();
+        if command_split.len() == 0 {
+            return;
+        }
+        let (first, rest) = command_split.split_first().unwrap();
+        Command::new(first)
+            .args(rest)
+            .spawn()
+            .expect("Could not parse command, please check your toml");
+    }
+
     pub fn handle_close(&self) {
         if self.has_external_monitor() {
             self.external_monitor();
@@ -168,24 +218,27 @@ impl HyprDock {
     }
 
     pub fn lock_system(&self) {
-        Command::new("swaylock")
-            .arg("-c")
-            .arg("000000")
-            .spawn()
-            .expect("Failed to lock screen");
-        Command::new("systemctl")
-            .arg("suspend")
-            .output()
-            .expect("Failed to suspend");
+        // Command::new("swaylock")
+        //     .arg("-c")
+        //     .arg("000000")
+        //     .spawn()
+        //     .expect("Failed to lock screen");
+        // Command::new("systemctl")
+        //     .arg("suspend")
+        //     .output()
+        //     .expect("Failed to suspend");
+        self.execute_command(self.config.lock_command.as_str());
+        self.execute_command(self.config.suspend_command.as_str());
     }
 
     pub fn stop_music(&self) {
-        Command::new("playerctl")
-            .arg("--all-players")
-            .arg("-a")
-            .arg("pause")
-            .output()
-            .expect("Failed to pause music players");
+        // Command::new("playerctl")
+        //     .arg("--all-players")
+        //     .arg("-a")
+        //     .arg("pause")
+        //     .output()
+        //     .expect("Failed to pause music players");
+        self.execute_command(self.config.utility_command.as_str());
     }
 
     pub fn extend_monitor(&self) {
@@ -276,27 +329,30 @@ impl HyprDock {
     }
 
     pub fn restart_eww_bar(&self) {
-        if !self.bar.is_some() {
-            return;
-        }
-        let bar = self.bar.as_ref().clone().unwrap();
-        Command::new(bar)
-            .arg("close-all")
-            .output()
-            .expect("could not close eww windows");
-        Command::new(bar)
-            .arg("open")
-            .arg("bar")
-            .output()
-            .expect("Could not open eww bar");
+        // if !self.bar.is_some() {
+        //     return;
+        // }
+        // let bar = self.bar.as_ref().clone().unwrap();
+        // Command::new(bar)
+        //     .arg("close-all")
+        //     .output()
+        //     .expect("could not close eww windows");
+        // Command::new(bar)
+        //     .arg("open")
+        //     .arg("bar")
+        //     .output()
+        //     .expect("Could not open eww bar");
+        self.execute_command(self.config.close_bar_command.as_str());
+        self.execute_command(self.config.open_bar_command.as_str());
     }
 
     pub fn fix_eww_bar(&self) {
-        if !self.bar.is_some() {
-            return;
-        }
-        let bar = self.bar.as_ref().clone().unwrap();
-        Command::new(bar).arg("reload").output().expect("pingpang");
+        // if !self.bar.is_some() {
+        //     return;
+        // }
+        // let bar = self.bar.as_ref().clone().unwrap();
+        // Command::new(bar).arg("reload").output().expect("pingpang");
+        self.execute_command(self.config.reload_bar_command.as_str());
     }
 
     pub fn is_internal_active(&self) -> bool {
@@ -329,5 +385,3 @@ impl HyprDock {
         false
     }
 }
-//#TODO find a way to handle waybar properly
-// one that doesn't require you to use 9999x code duplication
