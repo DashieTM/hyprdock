@@ -2,8 +2,10 @@
 name = "hyprdock"
 version = "0.1.0"
 edition = "2021"
+description = "A small program to handle external pluggable screens with hyprland and acpid"
+license = "GPL-3.0-only"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-home = {}
+home = { version = "0.5.4" }
