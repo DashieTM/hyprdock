@@ -27,43 +27,63 @@ use std::{
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
-    if args.len() < 3 {
-        print!(
-            "Could not parse argument.
-            Possible arguments are:
-            extend
-            mirror
-            internal
-            external
-            server\n"
-        );
+    if args.len() < 2 {
+        print_help();
         return;
     }
 
-    let mode = &args[1];
-
-    let dock = HyprDock {
+    let mut dock = HyprDock {
         monitor_name: parse_monitor_name(),
-        bar: String::from(&args[2]),
+        bar: None,
     };
 
-    match mode.as_str() {
-        "extend" => dock.extend_monitor(),
-        "mirror" => dock.mirror_monitor(),
-        "internal" => dock.internal_monitor(),
-        "external" => dock.external_monitor(),
-        "server" => dock.socket_connect(),
-        _ => print!(
-            "Could not parse argument.
-            Possible arguments are:
-            extend
-            mirror
-            internal
-            external
-            server\n"
-        ),
+    let mut iter = args.iter();
+    iter.next();
+    let mut iteration = 0;
+    for _ in 0..args.len() - 1 {
+        if iteration == args.len() - 1 {
+            break;
+        }
+        iteration += 1;
+        match iter.next().unwrap().as_str() {
+            "--internal" | "-i" => dock.internal_monitor(),
+            "--external" | "-e" => dock.external_monitor(),
+            "--extend" | "-eo" => dock.extend_monitor(),
+            "--mirror" | "-io" => dock.mirror_monitor(),
+            "--server" | "-s" => dock.socket_connect(),
+            "--version" | "-v" => println!("0.1"),
+            "--bar" | "-b" => {
+                dock.bar = {
+                    iteration += 1;
+                    Some(iter.next().unwrap().clone())
+                }
+            }
+            "--help" | "-h" => {
+                print_help();
+                return;
+            }
+            x => {
+                println!("Could not parse {}", x);
+                print_help();
+                return;
+            }
+        }
     }
+}
+
+fn print_help() {
+    print!(
+        "Possible arguments are:
+            --extend/-e:    Extends monitors
+            --mirror/-m:    Mirrors monitors
+            --internal/-io: Switch to internal monitor only
+            --external/-eo: Switch to external monitor only
+            --server/-s:    daemon version
+                            automatically handles actions on laptop lid close and open.
+            --bar/-b:       selects a bar to start when monitor switches (used for eww)
+            --help/-h:      shows options
+            --version/-v:   shows version\n"
+    );
 }
 
 fn parse_monitor_name() -> String {
@@ -92,7 +112,7 @@ fn parse_monitor_name() -> String {
 
 struct HyprDock {
     pub monitor_name: String,
-    pub bar: String,
+    pub bar: Option<String>,
 }
 
 impl HyprDock {
@@ -256,11 +276,15 @@ impl HyprDock {
     }
 
     pub fn restart_eww_bar(&self) {
-        Command::new(self.bar.as_str())
+        if !self.bar.is_some() {
+            return;
+        }
+        let bar = self.bar.as_ref().clone().unwrap();
+        Command::new(bar)
             .arg("close-all")
             .output()
             .expect("could not close eww windows");
-        Command::new(self.bar.as_str())
+        Command::new(bar)
             .arg("open")
             .arg("bar")
             .output()
@@ -268,10 +292,11 @@ impl HyprDock {
     }
 
     pub fn fix_eww_bar(&self) {
-        Command::new(self.bar.as_str())
-            .arg("reload")
-            .output()
-            .expect("pingpang");
+        if !self.bar.is_some() {
+            return;
+        }
+        let bar = self.bar.as_ref().clone().unwrap();
+        Command::new(bar).arg("reload").output().expect("pingpang");
     }
 
     pub fn is_internal_active(&self) -> bool {
