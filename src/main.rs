@@ -51,7 +51,7 @@ fn main() {
             "--extend" | "-eo" => dock.extend_monitor(),
             "--mirror" | "-io" => dock.mirror_monitor(),
             "--server" | "-s" => dock.socket_connect(),
-            "--version" | "-v" => println!("0.1"),
+            "--version" | "-v" => println!("0.2.0"),
             "--bar" | "-b" => {
                 dock.bar = {
                     iteration += 1;
