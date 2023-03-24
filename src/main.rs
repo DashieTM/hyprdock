@@ -22,6 +22,22 @@ use std::{
 };
 use toml;
 
+const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
+        open_bar_command = 'eww open bar'
+        close_bar_command = 'eww close-all'
+        reload_bar_command = 'eww reload'
+        suspend_command = 'systemctl suspend'
+        lock_command = 'swaylock -c 000000'
+        utility_command = 'playerctl --all-players -a pause'
+        get_monitors_command = 'hyprctl monitors'
+        enable_internal_monitor_command = 'hyprctl keyword monitor {monitor_name},highrr,0x0,1'
+        disable_internal_monitor_command = 'hyprctl keyword monitor {monitor_name},diabled'
+        enable_external_monitor_command = 'hyprctl keyword monitor ,highrr,0x0,1'
+        disable_external_monitor_command = 'hyprctl keyword monitor ,disabled'
+        extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
+        mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
+        wallpaper_command = 'hyprctl dispatch hyprpaper'"#;
+
 #[derive(Deserialize)]
 struct HyprDock {
     monitor_name: String,
@@ -39,6 +55,25 @@ struct HyprDock {
     extend_command: String,
     mirror_command: String,
     wallpaper_command: String,
+}
+
+#[derive(Deserialize)]
+struct HyprDockOptional {
+    monitor_name: Option<String>,
+    open_bar_command: Option<String>,
+    close_bar_command: Option<String>,
+    reload_bar_command: Option<String>,
+    suspend_command: Option<String>,
+    lock_command: Option<String>,
+    utility_command: Option<String>,
+    get_monitors_command: Option<String>,
+    enable_internal_monitor_command: Option<String>,
+    disable_internal_monitor_command: Option<String>,
+    enable_external_monitor_command: Option<String>,
+    disable_external_monitor_command: Option<String>,
+    extend_command: Option<String>,
+    mirror_command: Option<String>,
+    wallpaper_command: Option<String>,
 }
 
 fn main() {
@@ -103,30 +138,57 @@ fn print_help() {
 fn parse_config(path: &str) -> HyprDock {
     let contents = match fs::read_to_string(path) {
         Ok(c) => c,
-        Err(_) => String::from(
-            r#"monitor_name = 'eDP-1'
-            open_bar_command = 'eww open bar'
-            close_bar_command = 'eww close-all'
-            reload_bar_command = 'eww reload'
-            suspend_command = 'systemctl suspend'
-            lock_command = 'swaylock -c 000000'
-            utility_command = 'playerctl --all-players -a pause'
-            get_monitors_command = 'hyprctl monitors'
-            enable_internal_monitor_command = 'hyprctl keyword monitor {monitor_name},highrr,0x0,1'
-            disable_internal_monitor_command = 'hyprctl keyword monitor {monitor_name},diabled'
-            enable_external_monitor_command = 'hyprctl keyword monitor ,highrr,0x0,1'
-            disable_external_monitor_command = 'hyprctl keyword monitor ,disabled'
-            extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
-            mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
-            wallpaper_command = 'hyprctl dispatch hyprpaper'"#,
-        ),
+        Err(_) => String::from(DEFAULT_CONFIG),
     };
-    match toml::from_str(&contents) {
+    let parsed_conf: HyprDockOptional = match toml::from_str(&contents) {
         Ok(d) => d,
-        Err(_) => {
-            eprintln!("Unable to load data from `{}`", path);
-            exit(1);
-        }
+        Err(_) => toml::from_str(DEFAULT_CONFIG).unwrap(),
+    };
+    let parsed_monitor = parsed_conf.monitor_name.unwrap_or_else(|| String::from("eDP-1"));
+    HyprDock {
+        monitor_name: parsed_monitor.clone(), 
+        open_bar_command: parsed_conf
+            .open_bar_command
+            .unwrap_or_else(|| String::from("eww open bar")),
+        close_bar_command: parsed_conf
+            .close_bar_command
+            .unwrap_or_else(|| String::from("eww close-all")),
+        reload_bar_command: parsed_conf
+            .reload_bar_command
+            .unwrap_or_else(|| String::from("eww reload")),
+        suspend_command: parsed_conf
+            .suspend_command
+            .unwrap_or_else(|| String::from("systemctl suspend")),
+        lock_command: parsed_conf
+            .lock_command
+            .unwrap_or_else(|| String::from("swayloc -c 000000")),
+        utility_command: parsed_conf
+            .utility_command
+            .unwrap_or_else(|| String::from("playerctl --all-players -a pause")),
+        get_monitors_command: parsed_conf
+            .get_monitors_command
+            .unwrap_or_else(|| String::from("hyprctl monitors")),
+        enable_internal_monitor_command: parsed_conf
+            .enable_internal_monitor_command
+            .unwrap_or_else(|| format!("hyprctl keyword monitor {},highrr,0x0,1", parsed_monitor.clone())),
+        disable_internal_monitor_command: parsed_conf
+            .disable_internal_monitor_command
+            .unwrap_or_else(|| format!("hyprctl keyword monitor {},disabled", parsed_monitor)),
+        enable_external_monitor_command: parsed_conf
+            .enable_external_monitor_command
+            .unwrap_or_else(|| String::from("hyprctl keyword monitor ,highrr,auto,1")),
+        disable_external_monitor_command: parsed_conf
+            .disable_external_monitor_command
+            .unwrap_or_else(|| String::from("hyprctl keyword monitor ,disabled")),
+        extend_command: parsed_conf
+            .extend_command
+            .unwrap_or_else(|| String::from("hyprctl keyword monitor ,highrr,auto,1")),
+        mirror_command: parsed_conf.mirror_command.unwrap_or_else(|| {
+            String::from("hyprctl keyword monitor ,highrr,auto,1,mirror,{monitor_name}")
+        }),
+        wallpaper_command: parsed_conf
+            .wallpaper_command
+            .unwrap_or_else(|| String::from("hyprctl dispatch exec hyprpaper")),
     }
 }
 
