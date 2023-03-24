@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use serde_derive::Deserialize;
 use std::{
-    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::exit, process::Command,
-    thread, time::Duration,
+    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::Command, thread,
+    time::Duration,
 };
 use toml;
 
@@ -144,9 +144,11 @@ fn parse_config(path: &str) -> HyprDock {
         Ok(d) => d,
         Err(_) => toml::from_str(DEFAULT_CONFIG).unwrap(),
     };
-    let parsed_monitor = parsed_conf.monitor_name.unwrap_or_else(|| String::from("eDP-1"));
+    let parsed_monitor = parsed_conf
+        .monitor_name
+        .unwrap_or_else(|| String::from("eDP-1"));
     HyprDock {
-        monitor_name: parsed_monitor.clone(), 
+        monitor_name: parsed_monitor.clone(),
         open_bar_command: parsed_conf
             .open_bar_command
             .unwrap_or_else(|| String::from("eww open bar")),
@@ -170,10 +172,20 @@ fn parse_config(path: &str) -> HyprDock {
             .unwrap_or_else(|| String::from("hyprctl monitors")),
         enable_internal_monitor_command: parsed_conf
             .enable_internal_monitor_command
-            .unwrap_or_else(|| format!("hyprctl keyword monitor {},highrr,0x0,1", parsed_monitor.clone())),
+            .unwrap_or_else(|| {
+                format!(
+                    "hyprctl keyword monitor {},highrr,0x0,1",
+                    parsed_monitor.clone()
+                )
+            }),
         disable_internal_monitor_command: parsed_conf
             .disable_internal_monitor_command
-            .unwrap_or_else(|| format!("hyprctl keyword monitor {},disabled", parsed_monitor)),
+            .unwrap_or_else(|| {
+                format!(
+                    "hyprctl keyword monitor {},disabled",
+                    parsed_monitor.clone()
+                )
+            }),
         enable_external_monitor_command: parsed_conf
             .enable_external_monitor_command
             .unwrap_or_else(|| String::from("hyprctl keyword monitor ,highrr,auto,1")),
@@ -184,7 +196,10 @@ fn parse_config(path: &str) -> HyprDock {
             .extend_command
             .unwrap_or_else(|| String::from("hyprctl keyword monitor ,highrr,auto,1")),
         mirror_command: parsed_conf.mirror_command.unwrap_or_else(|| {
-            String::from("hyprctl keyword monitor ,highrr,auto,1,mirror,{monitor_name}")
+            format!(
+                "hyprctl keyword monitor ,highrr,auto,1,mirror,{}",
+                parsed_monitor
+            )
         }),
         wallpaper_command: parsed_conf
             .wallpaper_command
