@@ -30,8 +30,8 @@ const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
         lock_command = 'swaylock -c 000000'
         utility_command = 'playerctl --all-players -a pause'
         get_monitors_command = 'hyprctl monitors'
-        enable_internal_monitor_command = 'hyprctl keyword monitor {monitor_name},highrr,0x0,1'
-        disable_internal_monitor_command = 'hyprctl keyword monitor {monitor_name},diabled'
+        enable_internal_monitor_command = 'hyprctl keyword monitor eDP-1,highrr,0x0,1'
+        disable_internal_monitor_command = 'hyprctl keyword monitor eDP-1,disabled'
         enable_external_monitor_command = 'hyprctl keyword monitor ,highrr,0x0,1'
         disable_external_monitor_command = 'hyprctl keyword monitor ,disabled'
         extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
@@ -104,8 +104,8 @@ fn main() {
             "--external" | "-e" => dock.external_monitor(),
             "--extend" | "-eo" => dock.extend_monitor(),
             "--mirror" | "-io" => dock.mirror_monitor(),
-            "--server" | "-s" => dock.socket_connect(),
             "--suspend" | "-su" => dock.lock_system(),
+            "--server" | "-s" => dock.socket_connect(),
             "--version" | "-v" => println!("0.2.1"),
             "--help" | "-h" => {
                 print_help();
@@ -123,15 +123,15 @@ fn main() {
 fn print_help() {
     print!(
         "Possible arguments are:
-            --extend/-e:    Extends monitors
-            --mirror/-m:    Mirrors monitors
             --internal/-io: Switch to internal monitor only
             --external/-eo: Switch to external monitor only
+            --extend/-e:    Extends monitors
+            --mirror/-m:    Mirrors monitors
+            --suspend/-su:  Suspend the system
             --server/-s:    daemon version
                             automatically handles actions on laptop lid close and open.
-            --bar/-b:       selects a bar to start when monitor switches (used for eww)
-            --help/-h:      shows options
-            --version/-v:   shows version\n"
+            --version/-v:   shows version
+            --help/-h:      shows options\n"
     );
 }
 
