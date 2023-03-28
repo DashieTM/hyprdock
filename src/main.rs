@@ -210,10 +210,11 @@ fn parse_config(path: &str) -> HyprDock {
 impl HyprDock {
     pub fn execute_command(&self, command: &str) {
         let command_split: Vec<&str> = command.split(" ").collect();
-        if command_split.len() == 0 {
+        println!("{}", command_split.len());
+        let (first, rest) = command_split.split_first().unwrap();
+        if *first == "" {
             return;
         }
-        let (first, rest) = command_split.split_first().unwrap();
         Command::new(first)
             .args(rest)
             .spawn()
@@ -222,10 +223,10 @@ impl HyprDock {
 
     pub fn execute_command_with_output(&self, command: &str) -> Vec<u8> {
         let command_split: Vec<&str> = command.split(" ").collect();
-        if command_split.len() == 0 {
+        let (first, rest) = command_split.split_first().unwrap();
+        if *first == "" {
             return Vec::new();
         }
-        let (first, rest) = command_split.split_first().unwrap();
         Command::new(first)
             .args(rest)
             .output()
