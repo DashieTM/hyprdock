@@ -209,16 +209,19 @@ fn parse_config(path: &str) -> HyprDock {
 
 impl HyprDock {
     pub fn execute_command(&self, command: &str) {
-        let command_split: Vec<&str> = command.split(" ").collect();
-        println!("{}", command_split.len());
-        let (first, rest) = command_split.split_first().unwrap();
-        if *first == "" {
-            return;
+        let toml_split: Vec<&str> = command.split(";;").collect();
+        for toml_key in toml_split {
+            let command_split: Vec<&str> = toml_key.split(" ").collect();
+            println!("{}", command_split.len());
+            let (first, rest) = command_split.split_first().unwrap();
+            if *first == "" {
+                return;
+            }
+            Command::new(first)
+                .args(rest)
+                .spawn()
+                .expect("Could not parse command, please check your toml");
         }
-        Command::new(first)
-            .args(rest)
-            .spawn()
-            .expect("Could not parse command, please check your toml");
     }
 
     pub fn execute_command_with_output(&self, command: &str) -> Vec<u8> {

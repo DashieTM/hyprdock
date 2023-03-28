@@ -39,5 +39,10 @@ disable_external_monitor_command = "hyprctl keyword monitor ,disabled"
 extend_command = "hyprctl keyword monitor ,highrr,1920x0,1"
 mirror_command = "hyprctl keyword monitor ,highrr,0x0,1"
 wallpaper_command = "hyprctl dispatch hyprpaper"
-
 ~~~
+
+### multiple commands in 1 line
+~~~
+utility_command = "yourcommand args ;; yourothercommand args"
+~~~
+
