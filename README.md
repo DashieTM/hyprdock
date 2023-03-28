@@ -43,6 +43,7 @@ wallpaper_command = "hyprctl dispatch hyprpaper"
 
 ### multiple commands in 1 line
 ~~~
+# make sure to leave a blank space between the start and end of the ;;, which marks the end and start of commands.
 utility_command = "yourcommand args ;; yourothercommand args"
 ~~~
 

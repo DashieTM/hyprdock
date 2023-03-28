@@ -105,6 +105,8 @@ fn main() {
             "--extend" | "-eo" => dock.extend_monitor(),
             "--mirror" | "-io" => dock.mirror_monitor(),
             "--suspend" | "-su" => dock.lock_system(),
+            "--utility" | "-u" => dock.utility(),
+            "--wallpaper" | "-w" => dock.wallpaper(),
             "--server" | "-s" => dock.socket_connect(),
             "--version" | "-v" => println!("0.2.1"),
             "--help" | "-h" => {
@@ -128,6 +130,8 @@ fn print_help() {
             --extend/-e:    Extends monitors
             --mirror/-m:    Mirrors monitors
             --suspend/-su:  Suspend the system
+            --utility/-u:   Use utility command
+            --wallpaper/-w  Wallpaper command
             --server/-s:    daemon version
                             automatically handles actions on laptop lid close and open.
             --version/-v:   shows version
@@ -209,7 +213,7 @@ fn parse_config(path: &str) -> HyprDock {
 
 impl HyprDock {
     pub fn execute_command(&self, command: &str) {
-        let toml_split: Vec<&str> = command.split(";;").collect();
+        let toml_split: Vec<&str> = command.split(" ;; ").collect();
         for toml_key in toml_split {
             let command_split: Vec<&str> = toml_key.split(" ").collect();
             println!("{}", command_split.len());
@@ -241,10 +245,10 @@ impl HyprDock {
         if self.has_external_monitor() {
             self.external_monitor();
             thread::sleep(Duration::from_millis(1000));
-            self.restart_hyprpaper();
-            self.restart_eww_bar();
+            self.wallpaper();
+            self.reload_bar();
         } else {
-            self.stop_music();
+            self.utility();
             self.lock_system();
         }
     }
@@ -255,16 +259,16 @@ impl HyprDock {
         }
         if !self.has_external_monitor() {
             self.internal_monitor();
-            self.restart_hyprpaper();
-            self.restart_eww_bar();
-            self.fix_eww_bar();
+            self.wallpaper();
+            self.reload_bar();
+            self.fix_bar();
             return;
         } else {
             self.internal_monitor();
             self.extend_monitor();
-            self.restart_hyprpaper();
-            self.restart_eww_bar();
-            self.fix_eww_bar();
+            self.wallpaper();
+            self.reload_bar();
+            self.fix_bar();
         }
     }
 
@@ -293,7 +297,7 @@ impl HyprDock {
         self.execute_command(self.suspend_command.as_str());
     }
 
-    pub fn stop_music(&self) {
+    pub fn utility(&self) {
         self.execute_command(self.utility_command.as_str());
     }
 
@@ -316,16 +320,16 @@ impl HyprDock {
         self.execute_command(self.enable_internal_monitor_command.as_str());
         self.execute_command(self.disable_external_monitor_command.as_str());
         if needs_restart {
-            self.restart_eww_bar();
-            self.restart_hyprpaper();
+            self.reload_bar();
+            self.wallpaper();
         }
     }
 
     pub fn restart_internal(&self) {
         self.execute_command(self.enable_internal_monitor_command.as_str());
-        self.restart_hyprpaper();
-        self.restart_eww_bar();
-        self.fix_eww_bar();
+        self.wallpaper();
+        self.reload_bar();
+        self.fix_bar();
     }
 
     pub fn external_monitor(&self) {
@@ -336,21 +340,21 @@ impl HyprDock {
         self.execute_command(self.disable_internal_monitor_command.as_str());
         self.execute_command(self.enable_external_monitor_command.as_str());
         if needs_restart {
-            self.restart_eww_bar();
-            self.restart_hyprpaper();
+            self.reload_bar();
+            self.wallpaper();
         }
     }
 
-    pub fn restart_hyprpaper(&self) {
+    pub fn wallpaper(&self) {
         self.execute_command(self.wallpaper_command.as_str());
     }
 
-    pub fn restart_eww_bar(&self) {
+    pub fn reload_bar(&self) {
         self.execute_command(self.close_bar_command.as_str());
         self.execute_command(self.open_bar_command.as_str());
     }
 
-    pub fn fix_eww_bar(&self) {
+    pub fn fix_bar(&self) {
         self.execute_command(self.reload_bar_command.as_str());
     }
 
