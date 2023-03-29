@@ -22,6 +22,8 @@ use std::{
 };
 use toml;
 
+pub mod gui;
+
 const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
         open_bar_command = 'eww open bar'
         close_bar_command = 'eww close-all'
@@ -38,7 +40,7 @@ const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
         mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
         wallpaper_command = 'hyprctl dispatch hyprpaper'"#;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct HyprDock {
     monitor_name: String,
     open_bar_command: String,
@@ -113,6 +115,7 @@ fn main() {
                 print_help();
                 return;
             }
+            "--gui" | "-g" => dock.run_gui(),
             x => {
                 println!("Could not parse {}", x);
                 print_help();
@@ -134,6 +137,7 @@ fn print_help() {
             --wallpaper/-w  Wallpaper command
             --server/-s:    daemon version
                             automatically handles actions on laptop lid close and open.
+            --gui/-g:       Launch GUI version
             --version/-v:   shows version
             --help/-h:      shows options\n"
     );

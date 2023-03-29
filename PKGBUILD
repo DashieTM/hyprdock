@@ -1,3 +1,5 @@
+# Maintainer: Fabio Lenherr <dashie@dashie.org>
+
 pkgname=hyprdock
 pkgver=0.2
 pkgrel=1
