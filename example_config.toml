@@ -1,5 +1,7 @@
 # example toml file
 monitor_name = "eDP-1"
+# external or mirror
+default_external_mode = "extend"
 open_bar_command = "eww open bar"
 close_bar_command = "eww close-all"
 reload_bar_command = "eww reload"

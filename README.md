@@ -47,3 +47,25 @@ wallpaper_command = "hyprctl dispatch hyprpaper"
 utility_command = "yourcommand args ;; yourothercommand args"
 ~~~
 
+### extend and mirror
+You can specify which should be the default command after pluggin in monitors or opening the laptop lid when an external monitor is still connected:
+~~~
+default_external_command = "extend" # or "mirror"
+~~~
+
+### When are specifif functions called?
+- open_bar_command =>  used to open new bars on new monitors
+- close_bar_command =>  used to close a bugged eww bar
+- reload_bar_command =>  used to remove graphical errors with eww after re-enabling internal monitor
+- suspend_command =>  used to suspend (on lid close without external monitor)
+- lock_command => used to lock screen (on lid close without external monitor)
+- utility_command => used before locking -> stop music etc
+- get_monitors_command => used to check if external monitors are attached
+- enable_internal_monitor_command => run after using internal only or opening the laptop lid after using external monitor only
+- disable_internal_monitor_command => run after using external only or closing laptop lid with external monitor attached
+- enable_external_monitor_command => run after disabling internal monitor or pluggin in an external monitor
+- disable_external_monitor_command => run after using internal only or unplugging an external monitor
+- extend_command => run after using extend or default function for external monitors
+- mirror_command => run after using mirror or default function for external monitors
+- wallpaper_command => run after plugging in a monitor
+
