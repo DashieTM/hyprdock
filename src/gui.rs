@@ -1,5 +1,5 @@
 use crate::HyprDock;
-use gtk::{gdk, glib, StyleContext};
+use gtk::{gdk, StyleContext};
 pub use gtk::{prelude::*, Button};
 use std::rc::Rc;
 

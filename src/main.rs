@@ -220,7 +220,6 @@ impl HyprDock {
         let toml_split: Vec<&str> = command.split(" ;; ").collect();
         for toml_key in toml_split {
             let command_split: Vec<&str> = toml_key.split(" ").collect();
-            println!("{}", command_split.len());
             let (first, rest) = command_split.split_first().unwrap();
             if *first == "" {
                 return;
