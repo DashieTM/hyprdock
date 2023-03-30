@@ -48,12 +48,12 @@ utility_command = "yourcommand args ;; yourothercommand args"
 ~~~
 
 ### extend and mirror
-You can specify which should be the default command after pluggin in monitors or opening the laptop lid when an external monitor is still connected:
+You can specify which should be the default command after plugging in monitors or opening the laptop lid when an external monitor is still connected:
 ~~~
 default_external_command = "extend" # or "mirror"
 ~~~
 
-### When are specifif functions called?
+### When are specific functions called?
 - open_bar_command =>  used to open new bars on new monitors
 - close_bar_command =>  used to close a bugged eww bar
 - reload_bar_command =>  used to remove graphical errors with eww after re-enabling internal monitor
