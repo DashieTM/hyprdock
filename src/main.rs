@@ -285,8 +285,8 @@ impl HyprDock {
         match event {
             "button/lid LID close\n" => self.handle_close(),
             "button/lid LID open\n" => self.handle_open(),
-            "hdmi in\n" => self.add_monitor(),
-            "hdmi out\n" => self.internal_monitor(),
+            "jack/videoout VIDEOOUT plug\n" => self.add_monitor(),
+            "jack/videoout VIDEOOUT unplug\n" => self.internal_monitor(),
             _ => {}
         }
     }
