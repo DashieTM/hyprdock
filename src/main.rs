@@ -25,6 +25,7 @@ use toml;
 pub mod gui;
 
 const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
+        default_external_mode = 'extend'
         open_bar_command = 'eww open bar'
         close_bar_command = 'eww close-all'
         reload_bar_command = 'eww reload'
@@ -43,6 +44,7 @@ const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
 #[derive(Deserialize, Clone)]
 struct HyprDock {
     monitor_name: String,
+    default_external_mode: String,
     open_bar_command: String,
     close_bar_command: String,
     reload_bar_command: String,
@@ -62,6 +64,7 @@ struct HyprDock {
 #[derive(Deserialize)]
 struct HyprDockOptional {
     monitor_name: Option<String>,
+    default_external_mode: Option<String>,
     open_bar_command: Option<String>,
     close_bar_command: Option<String>,
     reload_bar_command: Option<String>,
@@ -157,6 +160,9 @@ fn parse_config(path: &str) -> HyprDock {
         .unwrap_or_else(|| String::from("eDP-1"));
     HyprDock {
         monitor_name: parsed_monitor.clone(),
+        default_external_mode: parsed_conf
+            .default_external_mode
+            .unwrap_or_else(|| String::from("extend")),
         open_bar_command: parsed_conf
             .open_bar_command
             .unwrap_or_else(|| String::from("eww open bar")),
@@ -268,7 +274,7 @@ impl HyprDock {
             return;
         } else {
             self.internal_monitor();
-            self.extend_monitor();
+            self.add_monitor();
             self.wallpaper();
             self.reload_bar();
             self.fix_bar();
@@ -279,6 +285,8 @@ impl HyprDock {
         match event {
             "button/lid LID close\n" => self.handle_close(),
             "button/lid LID open\n" => self.handle_open(),
+            "jack/videoout VIDEOOUT plug\n" => self.add_monitor(),
+            "jack/videoout VIDEOOUT unplug\n" => self.internal_monitor(),
             _ => {}
         }
     }
@@ -359,6 +367,14 @@ impl HyprDock {
 
     pub fn fix_bar(&self) {
         self.execute_command(self.reload_bar_command.as_str());
+    }
+
+    pub fn add_monitor(&self) {
+        match self.default_external_mode.as_str() {
+            "extend" => self.extend_monitor(),
+            "mirror" => self.mirror_monitor(),
+            _ => (),
+        }
     }
 
     pub fn is_internal_active(&self) -> bool {
