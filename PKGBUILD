@@ -12,12 +12,12 @@ source=("${pkgver}.tar.gz::https://github.com/DashieTM/Hyprdock/archive/refs/tag
 sha256sums=('')
 
 build() {
-  cd Hyprdock-${pkgver}
+  cd hyprdock-${pkgver}
   cargo build --release
 }
 
 package() {
-  cd Hyprdock-${pkgver}
+  cd hyprdock-${pkgver}
 	gendesk --pkgname "$pkgname" --pkgdesc "$pkgdesc" --name "HyprDock" --categories "Utility;GTK;" --terminal=true
 	install -Dm755 target/release/"$pkgname" "$pkgdir"/usr/bin/"$pkgname"
 }
