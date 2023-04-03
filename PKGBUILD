@@ -12,7 +12,7 @@ build() {
 }
 
 package() {
-  cd ..
-  cp target/release/hyprdock /usr/bin/.
+	gendesk --pkgname "$pkgname" --pkgdesc "$pkgdesc" --name "HyprDock" --categories "Utility;GTK;" --terminal=true
+	install -Dm755 target/release/"$pkgname" "$pkgdir"/usr/bin/"$pkgname"
 }
 
