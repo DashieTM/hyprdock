@@ -177,7 +177,7 @@ fn parse_config(path: &str) -> HyprDock {
             .unwrap_or_else(|| String::from("systemctl suspend")),
         lock_command: parsed_conf
             .lock_command
-            .unwrap_or_else(|| String::from("swayloc -c 000000")),
+            .unwrap_or_else(|| String::from("swaylock -c 000000")),
         utility_command: parsed_conf
             .utility_command
             .unwrap_or_else(|| String::from("playerctl --all-players -a pause")),

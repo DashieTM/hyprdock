@@ -559,7 +559,7 @@ dependencies = [
 
 [[package]]
 name = "hyprdock"
-version = "0.3.1"
+version = "0.3.3"
 dependencies = [
  "gtk",
  "gtk-layer-shell",
