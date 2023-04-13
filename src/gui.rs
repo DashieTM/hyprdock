@@ -22,14 +22,15 @@ use std::rc::Rc;
 
 impl HyprDock {
     pub fn run_gui(&self) {
-        let dock = Rc::new(self.clone());
+        let dock1 = Rc::new(self.clone());
+        let dock2 = Rc::new(self.clone());
         let app = gtk::Application::builder()
             .application_id("org.dashie.hyprdock")
             .build();
 
-        app.connect_startup(|_| {
+        app.connect_startup(move |_| {
             gtk::init().unwrap();
-            load_css();
+            dock1.load_css();
         });
         app.connect_activate(move |app| {
             let apprc = Rc::new(app.clone());
@@ -38,18 +39,19 @@ impl HyprDock {
             let app3 = apprc.clone();
             let app4 = apprc.clone();
             let app5 = apprc.clone();
-            let config_ref1 = dock.clone();
-            let config_ref2 = dock.clone();
-            let config_ref3 = dock.clone();
-            let config_ref4 = dock.clone();
-            let config_ref5 = dock.clone();
-            let main_box = gtk::Box::builder().build();
+            let config_ref1 = dock2.clone();
+            let config_ref2 = dock2.clone();
+            let config_ref3 = dock2.clone();
+            let config_ref4 = dock2.clone();
+            let config_ref5 = dock2.clone();
+            let main_box = gtk::Box::builder().name("MainBox").build();
             let external = Button::builder()
                 .label("External Monitor only")
                 .margin_top(12)
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
+                .name("ExternalButton")
                 .build();
             let internal = Button::builder()
                 .label("Internal Monitor only")
@@ -57,6 +59,7 @@ impl HyprDock {
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
+                .name("InternalButton")
                 .build();
             let extend = Button::builder()
                 .label("Extend Monitors")
@@ -64,6 +67,7 @@ impl HyprDock {
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
+                .name("ExtendButton")
                 .build();
             let mirror = Button::builder()
                 .label("Mirror Monitors")
@@ -71,6 +75,7 @@ impl HyprDock {
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
+                .name("MirrorButton")
                 .build();
 
             external.connect_clicked(move |_external| {
@@ -99,6 +104,7 @@ impl HyprDock {
                 .application(app)
                 .title("Monitor Portal")
                 .child(&main_box)
+                .name("MainWindow")
                 .build();
 
             gtk_layer_shell::init_for_window(&window);
@@ -140,11 +146,18 @@ impl HyprDock {
         });
         app.run_with_args(&[""]);
     }
-}
-fn load_css() {
-    StyleContext::add_provider_for_screen(
-        &gdk::Screen::default().unwrap(),
-        &gtk::CssProvider::new(),
-        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    fn load_css(&self) {
+        let context_provider = gtk::CssProvider::new();
+        if self.css_string != "" {
+            if context_provider.load_from_path(&self.css_string).is_err() {
+                println!("Loading css failed! Please provide a path to a css file.");
+            }
+        }
+
+        StyleContext::add_provider_for_screen(
+            &gdk::Screen::default().unwrap(),
+            &context_provider,
+            gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+    }
 }

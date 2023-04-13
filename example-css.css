@@ -1,0 +1,23 @@
+#MainWindow {
+  border-radius: 10px;
+}
+
+#MainBox {
+  background-color: purple;
+}
+
+#ExternalButton {
+  color: red;
+}
+
+#InternalButton {
+  color: green;
+}
+
+#ExtendButton {
+  color: blue;
+}
+
+#MirrorButton {
+  color: black;
+}

@@ -559,7 +559,11 @@ dependencies = [
 
 [[package]]
 name = "hyprdock"
+<<<<<<< HEAD
 version = "0.3.3"
+=======
+version = "0.3.0"
+>>>>>>> 529098a (feat: Allow CSS override)
 dependencies = [
  "gtk",
  "gtk-layer-shell",

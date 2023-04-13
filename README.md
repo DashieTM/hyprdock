@@ -39,6 +39,7 @@ disable_external_monitor_command = "hyprctl keyword monitor ,disabled"
 extend_command = "hyprctl keyword monitor ,highrr,1920x0,1"
 mirror_command = "hyprctl keyword monitor ,highrr,0x0,1"
 wallpaper_command = "hyprctl dispatch hyprpaper"
+css_string = ""
 ~~~
 
 ### multiple commands in 1 line
@@ -69,3 +70,15 @@ default_external_command = "extend" # or "mirror"
 - mirror_command => run after using mirror or default function for external monitors
 - wallpaper_command => run after plugging in a monitor
 
+### CSS
+By default hyprdock uses your system gtk3 theme.\
+The style can be configured with your own CSS file.\
+Just overwrite the css_string variable in the toml configuration file.
+
+List of IDs 
+- MainWindow 
+- MainBox
+- InternalButton
+- ExternalButton
+- ExtendButton
+- MirrorButton

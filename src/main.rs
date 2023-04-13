@@ -39,7 +39,8 @@ const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
         disable_external_monitor_command = 'hyprctl keyword monitor ,disabled'
         extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
         mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
-        wallpaper_command = 'hyprctl dispatch hyprpaper'"#;
+        wallpaper_command = 'hyprctl dispatch hyprpaper'
+        css_string = ''"#;
 
 #[derive(Deserialize, Clone)]
 struct HyprDock {
@@ -59,6 +60,7 @@ struct HyprDock {
     extend_command: String,
     mirror_command: String,
     wallpaper_command: String,
+    css_string: String,
 }
 
 #[derive(Deserialize)]
@@ -79,6 +81,7 @@ struct HyprDockOptional {
     extend_command: Option<String>,
     mirror_command: Option<String>,
     wallpaper_command: Option<String>,
+    css_string: Option<String>,
 }
 
 fn main() {
@@ -218,6 +221,7 @@ fn parse_config(path: &str) -> HyprDock {
         wallpaper_command: parsed_conf
             .wallpaper_command
             .unwrap_or_else(|| String::from("hyprctl dispatch exec hyprpaper")),
+        css_string: parsed_conf.css_string.unwrap_or_else(|| String::from("")),
     }
 }
 
