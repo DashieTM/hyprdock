@@ -12,6 +12,8 @@ license = "GPL-3.0-only"
 home = { version = "0.5.4" }
 serde = "1.0.158"
 serde_derive = "1.0.158"
+serde_json = "*"
+json = "*"
 toml = "0.7.3"
 gtk = "0.17"
 gtk-layer-shell = "0.6.1"

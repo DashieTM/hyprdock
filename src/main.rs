@@ -15,6 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+use monitors::hypr_monitors::{save_hypr_monitor_data, set_hypr_monitors_from_file, compare_and_get_monitor_config, set_hypr_monitors_from_hyprvec};
 use serde_derive::Deserialize;
 use std::{
     env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::Command, thread,
@@ -23,8 +24,11 @@ use std::{
 use toml;
 
 pub mod gui;
+pub mod monitors;
 
-const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
+fn default_config() -> String {
+    format!(
+        r#"monitor_name = 'eDP-1'
         default_external_mode = 'extend'
         open_bar_command = 'eww open bar'
         close_bar_command = 'eww close-all'
@@ -40,7 +44,16 @@ const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
         extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
         mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
         wallpaper_command = 'hyprctl dispatch hyprpaper'
-        css_string = ''"#;
+        css_string = ''
+        config_folder = {}"#,
+        home::home_dir()
+            .unwrap()
+            .join(PathBuf::from(".config/hypr/monitors"))
+            .to_str()
+            .unwrap()
+            .to_string()
+    )
+}
 
 #[derive(Deserialize, Clone)]
 struct HyprDock {
@@ -61,6 +74,7 @@ struct HyprDock {
     mirror_command: String,
     wallpaper_command: String,
     css_string: String,
+    monitor_config_path: String,
 }
 
 #[derive(Deserialize)]
@@ -82,6 +96,7 @@ struct HyprDockOptional {
     mirror_command: Option<String>,
     wallpaper_command: Option<String>,
     css_string: Option<String>,
+    monitor_config_path: Option<String>,
 }
 
 fn main() {
@@ -115,6 +130,19 @@ fn main() {
             "--suspend" | "-su" => dock.lock_system(),
             "--utility" | "-u" => dock.utility(),
             "--wallpaper" | "-w" => dock.wallpaper(),
+            "--export" | "-ex" => {
+                save_hypr_monitor_data(
+                    dock.monitor_config_path.clone() + iter.next().unwrap() + ".json",
+                );
+                iteration += 1;
+            }
+            "--import" | "-in" => {
+                set_hypr_monitors_from_file(
+                    dock.monitor_config_path.clone() + iter.next().unwrap() + ".json",
+                );
+                dock.wallpaper();
+                iteration += 1;
+            }
             "--server" | "-s" => dock.socket_connect(),
             "--version" | "-v" => println!("0.2.1"),
             "--help" | "-h" => {
@@ -141,6 +169,10 @@ fn print_help() {
             --suspend/-su:  Suspend the system
             --utility/-u:   Use utility command
             --wallpaper/-w  Wallpaper command
+            --export/-ex:   Export current monitor config
+                            Needs a second parameter (i64) for config id
+            --import/-in:   Import a monitor config
+                            Needs a second parameter (i64) for config id
             --server/-s:    daemon version
                             automatically handles actions on laptop lid close and open.
             --gui/-g:       Launch GUI version
@@ -152,11 +184,11 @@ fn print_help() {
 fn parse_config(path: &str) -> HyprDock {
     let contents = match fs::read_to_string(path) {
         Ok(c) => c,
-        Err(_) => String::from(DEFAULT_CONFIG),
+        Err(_) => default_config(),
     };
     let parsed_conf: HyprDockOptional = match toml::from_str(&contents) {
         Ok(d) => d,
-        Err(_) => toml::from_str(DEFAULT_CONFIG).unwrap(),
+        Err(_) => toml::from_str(&default_config()).unwrap(),
     };
     let parsed_monitor = parsed_conf
         .monitor_name
@@ -222,6 +254,14 @@ fn parse_config(path: &str) -> HyprDock {
             .wallpaper_command
             .unwrap_or_else(|| String::from("hyprctl dispatch exec hyprpaper")),
         css_string: parsed_conf.css_string.unwrap_or_else(|| String::from("")),
+        monitor_config_path: parsed_conf.monitor_config_path.unwrap_or_else(|| {
+            home::home_dir()
+                .unwrap()
+                .join(PathBuf::from(".config/hypr/monitors/"))
+                .to_str()
+                .unwrap()
+                .to_string()
+        }),
     }
 }
 
@@ -289,7 +329,14 @@ impl HyprDock {
         match event {
             "button/lid LID close\n" => self.handle_close(),
             "button/lid LID open\n" => self.handle_open(),
-            "jack/videoout VIDEOOUT plug\n" => self.add_monitor(),
+            "jack/videoout VIDEOOUT plug\n" => {
+                let monitors = compare_and_get_monitor_config(self);
+                if monitors.is_none() {
+                    self.add_monitor();
+                    return;
+                }
+                set_hypr_monitors_from_hyprvec(monitors.unwrap());
+            } //self.add_monitor(),
             "jack/videoout VIDEOOUT unplug\n" => self.internal_monitor(),
             _ => {}
         }
