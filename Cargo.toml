@@ -9,7 +9,7 @@ license = "GPL-3.0-only"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-home = { version = "0.5.4" }
+directories-next = "2.0.0"
 serde = "1.0.158"
 serde_derive = "1.0.158"
 serde_json = "*"

@@ -80,7 +80,8 @@ pub(crate) fn compare_and_get_monitor_config(dock: &HyprDock) -> Option<Vec<Hypr
             break;
         }
         let mut contents = String::new();
-        file.unwrap().read_to_string(&mut contents)
+        file.unwrap()
+            .read_to_string(&mut contents)
             .expect("Could not read data from file");
 
         let other_monitors: Vec<HyprMonitor> =
@@ -90,27 +91,22 @@ pub(crate) fn compare_and_get_monitor_config(dock: &HyprDock) -> Option<Vec<Hypr
         }
         let mut current_iter = current_monitors.iter();
         let mut other_iter = other_monitors.iter();
-        for _ in 1..current_monitors.len() {
+        for i in 1..current_monitors.len() {
             let current_monitor = current_iter.next().unwrap();
             let other_monitor = other_iter.next().unwrap();
             if current_monitor.make != other_monitor.make
                 && current_monitor.make != ""
                 && other_monitor.make != ""
-            {
-                continue;
-            }
-            if current_monitor.model != other_monitor.model
+                && current_monitor.model != other_monitor.model
                 && current_monitor.model != ""
                 && other_monitor.model != ""
-            {
-                continue;
-            }
-            if current_monitor.serial != other_monitor.serial
+                && current_monitor.serial != other_monitor.serial
                 && current_monitor.serial != ""
                 && other_monitor.serial != ""
             {
                 continue;
             }
+            println!("Apllying configuration {i}.");
             result = Some(other_monitors);
             break;
         }

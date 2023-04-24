@@ -15,7 +15,11 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-use monitors::hypr_monitors::{save_hypr_monitor_data, set_hypr_monitors_from_file, compare_and_get_monitor_config, set_hypr_monitors_from_hyprvec};
+use directories_next as dirs;
+use monitors::hypr_monitors::{
+    compare_and_get_monitor_config, save_hypr_monitor_data, set_hypr_monitors_from_file,
+    set_hypr_monitors_from_hyprvec,
+};
 use serde_derive::Deserialize;
 use std::{
     env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::Command, thread,
@@ -46,11 +50,9 @@ fn default_config() -> String {
         wallpaper_command = 'hyprctl dispatch hyprpaper'
         css_string = ''
         config_folder = {}"#,
-        home::home_dir()
-            .unwrap()
-            .join(PathBuf::from(".config/hypr/monitors"))
+        create_config_dir()
             .to_str()
-            .unwrap()
+            .expect("Could not convert path to string")
             .to_string()
     )
 }
@@ -107,11 +109,9 @@ fn main() {
     }
 
     let dock = parse_config(
-        home::home_dir()
-            .unwrap()
-            .join(PathBuf::from(".config/hypr/hyprdock.toml"))
+        create_config_dir().join("hyprdock.toml")
             .to_str()
-            .unwrap(),
+            .expect("Could not convert path to string"),
     );
 
     let mut iter = args.iter();
@@ -140,8 +140,10 @@ fn main() {
                 set_hypr_monitors_from_file(
                     dock.monitor_config_path.clone() + iter.next().unwrap() + ".json",
                 );
-                dock.wallpaper();
                 iteration += 1;
+                dock.wallpaper();
+                dock.reload_bar();
+                dock.fix_bar();
             }
             "--server" | "-s" => dock.socket_connect(),
             "--version" | "-v" => println!("0.2.1"),
@@ -157,6 +159,27 @@ fn main() {
             }
         }
     }
+}
+
+fn create_config_dir() -> PathBuf {
+    let maybe_config_dir = dirs::ProjectDirs::from("com", "dashie", "hyprdock");
+    if maybe_config_dir.is_none() {
+        panic!("Could not get config directory");
+    }
+    let config = maybe_config_dir.unwrap();
+    let config_dir = config.config_dir();
+    if !config_dir.exists() {
+        fs::create_dir(config_dir).expect("Could not create config directory");
+    }
+    let metadata = fs::metadata(config_dir);
+    if metadata.is_err() {
+        panic!("Could not check directory metadata for config file");
+    }
+    let file_path = config_dir.join("hyprdock.toml");
+    if !file_path.exists() {
+        fs::File::create(&file_path).expect("Could not write config file");
+    }
+    config_dir.join("")
 }
 
 fn print_help() {
@@ -255,11 +278,9 @@ fn parse_config(path: &str) -> HyprDock {
             .unwrap_or_else(|| String::from("hyprctl dispatch exec hyprpaper")),
         css_string: parsed_conf.css_string.unwrap_or_else(|| String::from("")),
         monitor_config_path: parsed_conf.monitor_config_path.unwrap_or_else(|| {
-            home::home_dir()
-                .unwrap()
-                .join(PathBuf::from(".config/hypr/monitors/"))
+            create_config_dir()
                 .to_str()
-                .unwrap()
+                .expect("Could not convert path to string")
                 .to_string()
         }),
     }
@@ -336,7 +357,10 @@ impl HyprDock {
                     return;
                 }
                 set_hypr_monitors_from_hyprvec(monitors.unwrap());
-            } //self.add_monitor(),
+                self.wallpaper();
+                self.reload_bar();
+                self.fix_bar();
+            }
             "jack/videoout VIDEOOUT unplug\n" => self.internal_monitor(),
             _ => {}
         }
