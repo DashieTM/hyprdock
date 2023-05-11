@@ -24,6 +24,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::Monitor;
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HyprMonitor {
     id: i64,
@@ -44,7 +45,6 @@ pub struct HyprMonitor {
 
 impl Hash for HyprMonitor {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
         self.name.hash(state);
         self.description.hash(state);
         self.make.hash(state);
@@ -92,7 +92,7 @@ pub fn get_current_monitor_hash(name: Option<&String>) -> String {
 }
 
 pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<String>) {
-    let mut monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
+    let monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
     let mut file = File::create(path + &monitor_hash + ".json").expect("Could not open json file");
     file.write_all(&get_hypr_monitor_info())
         .expect("Could not write to file");
@@ -100,7 +100,7 @@ pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<
 
 pub fn import_hypr_data(path: String, name: Option<&String>, hash: Option<String>) -> Vec<Monitor> {
     use std::io::prelude::*;
-    let mut monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
+    let monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
     let mut file = File::open(path + &monitor_hash + ".json").expect("Could not read file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
