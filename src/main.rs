@@ -185,6 +185,10 @@ fn create_config_dir() -> PathBuf {
     if !config_dir.exists() {
         fs::create_dir(config_dir).expect("Could not create config directory");
     }
+    let monitor_config_path = config_dir.join("monitor_configs/");
+    if !monitor_config_path.exists() {
+        fs::create_dir(config_dir.join("monitor_configs/")).expect("Could not create monitor config directory");
+    }
     let metadata = fs::metadata(config_dir);
     if metadata.is_err() {
         panic!("Could not check directory metadata for config file");
