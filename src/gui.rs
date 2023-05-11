@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-use crate::HyprDock;
+use crate::{monitors::hypr_monitors::save_hypr_monitor_data, HyprDock};
 pub use gtk::{prelude::*, Button};
 use gtk4 as gtk;
 use std::rc::Rc;
@@ -40,11 +40,13 @@ impl HyprDock {
             let app3 = apprc.clone();
             let app4 = apprc.clone();
             let app5 = apprc.clone();
+            let app6 = apprc.clone();
             let config_ref1 = dock2.clone();
             let config_ref2 = dock2.clone();
             let config_ref3 = dock2.clone();
             let config_ref4 = dock2.clone();
             let config_ref5 = dock2.clone();
+            let config_ref6 = dock2.clone();
             let main_box = gtk::Box::builder().name("MainBox").build();
             let external = Button::builder()
                 .label("External Monitor only")
@@ -78,6 +80,14 @@ impl HyprDock {
                 .margin_end(12)
                 .name("MirrorButton")
                 .build();
+            let export = Button::builder()
+                .label("Export MonitorConfig")
+                .margin_top(12)
+                .margin_bottom(12)
+                .margin_start(12)
+                .margin_end(12)
+                .name("ExportButton")
+                .build();
 
             external.connect_clicked(move |_external| {
                 config_ref1.external_monitor();
@@ -95,11 +105,16 @@ impl HyprDock {
                 config_ref4.mirror_monitor();
                 app4.quit();
             });
+            export.connect_clicked(move |_mirror| {
+                save_hypr_monitor_data(config_ref5.monitor_config_path.clone(), None);
+                app5.quit();
+            });
 
             main_box.append(&internal);
             main_box.append(&external);
             main_box.append(&extend);
             main_box.append(&mirror);
+            main_box.append(&export);
 
             let window = Rc::new(
                 adw::ApplicationWindow::builder()
@@ -126,23 +141,28 @@ impl HyprDock {
                         gtk::Inhibit(true)
                     }
                     gtk4::gdk::Key::_1 => {
-                        config_ref5.internal_monitor();
-                        app5.quit();
+                        config_ref6.internal_monitor();
+                        app6.quit();
                         gtk::Inhibit(true)
                     }
                     gtk4::gdk::Key::_2 => {
-                        config_ref5.external_monitor();
-                        app5.quit();
+                        config_ref6.external_monitor();
+                        app6.quit();
                         gtk::Inhibit(true)
                     }
                     gtk4::gdk::Key::_3 => {
-                        config_ref5.extend_monitor();
-                        app5.quit();
+                        config_ref6.extend_monitor();
+                        app6.quit();
                         gtk::Inhibit(true)
                     }
                     gtk4::gdk::Key::_4 => {
-                        config_ref5.mirror_monitor();
-                        app5.quit();
+                        config_ref6.mirror_monitor();
+                        app6.quit();
+                        gtk::Inhibit(true)
+                    }
+                    gtk4::gdk::Key::_5 => {
+                        save_hypr_monitor_data(config_ref6.monitor_config_path.clone(), None);
+                        app6.quit();
                         gtk::Inhibit(true)
                     }
                     _ => gtk::Inhibit(false),
