@@ -17,8 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use directories_next as dirs;
 use monitors::hypr_monitors::{
-    compare_and_get_monitor_config, save_hypr_monitor_data, set_hypr_monitors_from_file,
-    set_hypr_monitors_from_hyprvec,
+    get_current_monitor_hash, save_hypr_monitor_data, set_hypr_monitors_from_file,
 };
 use serde_derive::Deserialize;
 use std::{
@@ -109,7 +108,8 @@ fn main() {
     }
 
     let dock = parse_config(
-        create_config_dir().join("hyprdock.toml")
+        create_config_dir()
+            .join("hyprdock.toml")
             .to_str()
             .expect("Could not convert path to string"),
     );
@@ -131,15 +131,29 @@ fn main() {
             "--utility" | "-u" => dock.utility(),
             "--wallpaper" | "-w" => dock.wallpaper(),
             "--export" | "-ex" => {
-                save_hypr_monitor_data(
-                    dock.monitor_config_path.clone() + iter.next().unwrap() + ".json",
-                );
+                let next_token = iter.next();
+                if next_token.is_none() {
+                    save_hypr_monitor_data(dock.monitor_config_path.clone(), None);
+                    return;
+                }
+                if next_token.unwrap().chars().next().unwrap() == '-' {
+                    print_help();
+                    return;
+                }
+                save_hypr_monitor_data(dock.monitor_config_path.clone(), next_token);
                 iteration += 1;
             }
             "--import" | "-in" => {
-                set_hypr_monitors_from_file(
-                    dock.monitor_config_path.clone() + iter.next().unwrap() + ".json",
-                );
+                let next_token = iter.next();
+                if next_token.is_none() {
+                    set_hypr_monitors_from_file(dock.monitor_config_path.clone(), None);
+                    return;
+                }
+                if next_token.unwrap().chars().next().unwrap() == '-' {
+                    print_help();
+                    return;
+                }
+                set_hypr_monitors_from_file(dock.monitor_config_path.clone(), next_token);
                 iteration += 1;
                 dock.wallpaper();
                 dock.reload_bar();
@@ -351,12 +365,15 @@ impl HyprDock {
             "button/lid LID close\n" => self.handle_close(),
             "button/lid LID open\n" => self.handle_open(),
             "jack/videoout VIDEOOUT plug\n" => {
-                let monitors = compare_and_get_monitor_config(self);
-                if monitors.is_none() {
+                let path = PathBuf::from(
+                    self.monitor_config_path.clone() + &get_current_monitor_hash(None) + ".json",
+                );
+                if !path.exists() {
                     self.add_monitor();
-                    return;
+                    save_hypr_monitor_data(self.monitor_config_path.clone(), None);
+                } else {
+                    set_hypr_monitors_from_file(self.monitor_config_path.clone(), None);
                 }
-                set_hypr_monitors_from_hyprvec(monitors.unwrap());
                 self.wallpaper();
                 self.reload_bar();
                 self.fix_bar();

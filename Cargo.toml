@@ -15,5 +15,6 @@ serde_derive = "1.0.158"
 serde_json = "*"
 json = "*"
 toml = "0.7.3"
-gtk = "0.17"
-gtk-layer-shell = "0.6.1"
+adw = {package = "libadwaita", version = "0.3"}
+gtk4 = "0.6.6"
+gtk4-layer-shell = "0.0.3"

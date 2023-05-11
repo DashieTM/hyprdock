@@ -15,11 +15,12 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-use std::{fs::File, io::Write, process::Command};
+use std::{
+    collections::hash_map::DefaultHasher, fs::File, hash::Hash, hash::Hasher, io::Write,
+    process::Command,
+};
 
 use serde_derive::{Deserialize, Serialize};
-
-use crate::HyprDock;
 
 use super::Monitor;
 
@@ -39,6 +40,17 @@ pub struct HyprMonitor {
     scale: f64,
     transform: i64,
     vrr: bool,
+}
+
+impl Hash for HyprMonitor {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.name.hash(state);
+        self.description.hash(state);
+        self.make.hash(state);
+        self.model.hash(state);
+        self.serial.hash(state);
+    }
 }
 
 impl HyprMonitor {
@@ -66,64 +78,30 @@ pub fn get_hypr_monitor_info() -> Vec<u8> {
         .stdout
 }
 
-pub(crate) fn compare_and_get_monitor_config(dock: &HyprDock) -> Option<Vec<HyprMonitor>> {
-    let mut result = None;
-    let current = String::from_utf8(get_hypr_monitor_info()).expect("Could not get json");
-    let current_monitors: Vec<HyprMonitor> =
-        serde_json::from_str(&current).expect("Could not parse json");
-    let mut iteration = 0;
-    loop {
-        use std::io::prelude::*;
-        let file =
-            File::open(dock.monitor_config_path.clone() + iteration.to_string().as_str() + ".json");
-        if file.is_err() {
-            break;
-        }
-        let mut contents = String::new();
-        file.unwrap()
-            .read_to_string(&mut contents)
-            .expect("Could not read data from file");
-
-        let other_monitors: Vec<HyprMonitor> =
-            serde_json::from_str(contents.as_str()).expect("Could not parse json");
-        if current_monitors.len() != other_monitors.len() {
-            continue;
-        }
-        let mut current_iter = current_monitors.iter();
-        let mut other_iter = other_monitors.iter();
-        for i in 1..current_monitors.len() {
-            let current_monitor = current_iter.next().unwrap();
-            let other_monitor = other_iter.next().unwrap();
-            if current_monitor.make != other_monitor.make
-                && current_monitor.make != ""
-                && other_monitor.make != ""
-                && current_monitor.model != other_monitor.model
-                && current_monitor.model != ""
-                && other_monitor.model != ""
-                && current_monitor.serial != other_monitor.serial
-                && current_monitor.serial != ""
-                && other_monitor.serial != ""
-            {
-                continue;
-            }
-            println!("Apllying configuration {i}.");
-            result = Some(other_monitors);
-            break;
-        }
-        iteration += 1;
+pub fn get_current_monitor_hash(name: Option<&String>) -> String {
+    let monitors: Vec<HyprMonitor> = serde_json::from_str(
+        &String::from_utf8(get_hypr_monitor_info()).expect("Could not parse json"),
+    )
+    .expect("Could not parse json");
+    let mut s = DefaultHasher::new();
+    for monitor in monitors.iter() {
+        monitor.hash(&mut s);
     }
-    result
+    name.hash(&mut s);
+    s.finish().to_string()
 }
 
-pub fn save_hypr_monitor_data(path: String) {
-    let mut file = File::create(path).expect("Could not open json file");
+pub fn save_hypr_monitor_data(path: String, name: Option<&String>) {
+    let mut file = File::create(path + &get_current_monitor_hash(name) + ".json")
+        .expect("Could not open json file");
     file.write_all(&get_hypr_monitor_info())
         .expect("Could not write to file");
 }
 
-pub fn import_hypr_data(path: String) -> Vec<Monitor> {
+pub fn import_hypr_data(path: String, name: Option<&String>) -> Vec<Monitor> {
     use std::io::prelude::*;
-    let mut file = File::open(path).expect("Could not read file");
+    let mut file =
+        File::open(path + &get_current_monitor_hash(name) + ".json").expect("Could not read file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Could not read data from file");
@@ -144,8 +122,8 @@ pub fn set_hypr_monitors_from_hyprvec(monitors: Vec<HyprMonitor>) {
     }
 }
 
-pub fn set_hypr_monitors_from_file(path: String) {
-    let monitors = import_hypr_data(path);
+pub fn set_hypr_monitors_from_file(path: String, name: Option<&String>) {
+    let monitors = import_hypr_data(path, name);
     for monitor in monitors {
         monitor.enable_hypr_monitor();
     }
