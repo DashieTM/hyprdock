@@ -106,7 +106,7 @@ impl HyprDock {
                 app4.quit();
             });
             export.connect_clicked(move |_mirror| {
-                save_hypr_monitor_data(config_ref5.monitor_config_path.clone(), None);
+                save_hypr_monitor_data(config_ref5.monitor_config_path.clone(), None, None);
                 app5.quit();
             });
 
@@ -161,7 +161,7 @@ impl HyprDock {
                         gtk::Inhibit(true)
                     }
                     gtk4::gdk::Key::_5 => {
-                        save_hypr_monitor_data(config_ref6.monitor_config_path.clone(), None);
+                        save_hypr_monitor_data(config_ref6.monitor_config_path.clone(), None, None);
                         app6.quit();
                         gtk::Inhibit(true)
                     }

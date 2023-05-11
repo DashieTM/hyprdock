@@ -133,27 +133,27 @@ fn main() {
             "--export" | "-ex" => {
                 let next_token = iter.next();
                 if next_token.is_none() {
-                    save_hypr_monitor_data(dock.monitor_config_path.clone(), None);
+                    save_hypr_monitor_data(dock.monitor_config_path.clone(), None, None);
                     return;
                 }
                 if next_token.unwrap().chars().next().unwrap() == '-' {
                     print_help();
                     return;
                 }
-                save_hypr_monitor_data(dock.monitor_config_path.clone(), next_token);
+                save_hypr_monitor_data(dock.monitor_config_path.clone(), next_token, None);
                 iteration += 1;
             }
             "--import" | "-in" => {
                 let next_token = iter.next();
                 if next_token.is_none() {
-                    set_hypr_monitors_from_file(dock.monitor_config_path.clone(), None);
+                    set_hypr_monitors_from_file(dock.monitor_config_path.clone(), None, None);
                     return;
                 }
                 if next_token.unwrap().chars().next().unwrap() == '-' {
                     print_help();
                     return;
                 }
-                set_hypr_monitors_from_file(dock.monitor_config_path.clone(), next_token);
+                set_hypr_monitors_from_file(dock.monitor_config_path.clone(), next_token, None);
                 iteration += 1;
                 dock.wallpaper();
                 dock.reload_bar();
@@ -367,14 +367,22 @@ impl HyprDock {
             "button/lid LID close\n" => self.handle_close(),
             "button/lid LID open\n" => self.handle_open(),
             "jack/videoout VIDEOOUT plug\n" => {
-                let path = PathBuf::from(
-                    self.monitor_config_path.clone() + &get_current_monitor_hash(None) + ".json",
-                );
+                let monitor_hash = get_current_monitor_hash(None);
+                let path =
+                    PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
                 if !path.exists() {
                     self.add_monitor();
-                    save_hypr_monitor_data(self.monitor_config_path.clone(), None);
+                    save_hypr_monitor_data(
+                        self.monitor_config_path.clone(),
+                        None,
+                        Some(monitor_hash),
+                    );
                 } else {
-                    set_hypr_monitors_from_file(self.monitor_config_path.clone(), None);
+                    set_hypr_monitors_from_file(
+                        self.monitor_config_path.clone(),
+                        None,
+                        Some(monitor_hash),
+                    );
                 }
                 self.wallpaper();
                 self.reload_bar();
