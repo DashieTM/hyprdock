@@ -207,9 +207,11 @@ fn print_help() {
             --utility/-u:   Use utility command
             --wallpaper/-w  Wallpaper command
             --export/-ex:   Export current monitor config
-                            Needs a second parameter (i64) for config id
+                            optional name for import
+                            usage: hyprdock --export configname OR hyprdock --export
             --import/-in:   Import a monitor config
-                            Needs a second parameter (i64) for config id
+                            optional name for import 
+                            usage: hyprdock --import configname OR hyprdock --import
             --server/-s:    daemon version
                             automatically handles actions on laptop lid close and open.
             --gui/-g:       Launch GUI version
