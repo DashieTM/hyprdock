@@ -9,9 +9,12 @@ license = "GPL-3.0-only"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-home = { version = "0.5.4" }
+directories-next = "2.0.0"
 serde = "1.0.158"
 serde_derive = "1.0.158"
+serde_json = "*"
+json = "*"
 toml = "0.7.3"
-gtk = "0.17"
-gtk-layer-shell = "0.6.1"
+adw = {package = "libadwaita", version = "0.3"}
+gtk4 = "0.6.6"
+gtk4-layer-shell = "0.0.3"

@@ -1,0 +1,67 @@
+[{
+    "id": 0,
+    "name": "DP-1",
+    "description": "ASUSTek COMPUTER INC XG349C  (DP-1)",
+    "make": "ASUSTek COMPUTER INC",
+    "model": "XG349C",
+    "serial": "",
+    "width": 3440,
+    "height": 1440,
+    "refreshRate": 179.998993,
+    "x": 2560,
+    "y": 0,
+    "activeWorkspace": {
+        "id": 2,
+        "name": "2"
+    },
+    "reserved": [0, 30, 0, 0],
+    "scale": 1.00,
+    "transform": 0,
+    "focused": false,
+    "dpmsStatus": true,
+    "vrr": true
+},{
+    "id": 1,
+    "name": "DP-2",
+    "description": "Lenovo Group Limited LEN LT2452pwC 0x33344B41 (DP-2)",
+    "make": "Lenovo Group Limited",
+    "model": "LEN LT2452pwC",
+    "serial": "0x33344B41",
+    "width": 1920,
+    "height": 1200,
+    "refreshRate": 59.950001,
+    "x": 6000,
+    "y": 0,
+    "activeWorkspace": {
+        "id": 3,
+        "name": "3"
+    },
+    "reserved": [0, 0, 0, 0],
+    "scale": 1.00,
+    "transform": 1,
+    "focused": false,
+    "dpmsStatus": true,
+    "vrr": false
+},{
+    "id": 2,
+    "name": "DP-3",
+    "description": "ASUSTek COMPUTER INC ROG PG278QR #ASOWXFZDWU/d (DP-3)",
+    "make": "ASUSTek COMPUTER INC",
+    "model": "ROG PG278QR",
+    "serial": "#ASOWXFZDWU/d",
+    "width": 2560,
+    "height": 1440,
+    "refreshRate": 165.000000,
+    "x": 0,
+    "y": 0,
+    "activeWorkspace": {
+        "id": 1,
+        "name": "1"
+    },
+    "reserved": [0, 0, 0, 0],
+    "scale": 1.00,
+    "transform": 0,
+    "focused": true,
+    "dpmsStatus": true,
+    "vrr": false
+}]

@@ -1,6 +1,10 @@
 # Hyprdock
 A small utility to handle automatic monitor docking.
 
+## Breaking Changes
+- usage of gtk4-layer-shell instead of gtk3-layer-shell
+- change of config directory from hyprland config directory to hyprdock directory
+
 ## HardRequirements
 - acpid installed and running
 
@@ -20,6 +24,10 @@ So feel free to test out other programs.
 - internal: switches to internal monitor only
 - extend: extends monitors
 - mirror: mirrors monitors
+- export: save your current monitor configuration\
+          optional name parameter -> save configuration with specific name
+- import: import a stored configuration\
+          optional name parameter -> load configuration with specific name
 
 ## Example config
 ### path needs to be $HOME/.config/hypr/hyprdock.toml
@@ -71,7 +79,7 @@ default_external_command = "extend" # or "mirror"
 - wallpaper_command => run after plugging in a monitor
 
 ### CSS
-By default hyprdock uses your system gtk3 theme.\
+By default hyprdock uses your system gtk4 theme.\
 The style can be configured with your own CSS file.\
 Just overwrite the css_string variable in the toml configuration file.
 
@@ -82,3 +90,4 @@ List of IDs
 - ExternalButton
 - ExtendButton
 - MirrorButton
+- ExportButton
