@@ -128,10 +128,7 @@ impl HyprDock {
 
             gtk4_layer_shell::init_for_window(&*window);
             // gtk4_layer_shell::set_keyboard_interactivity(&window, true);
-            gtk4_layer_shell::set_keyboard_mode(
-                &*window,
-                gtk4_layer_shell::KeyboardMode::Exclusive,
-            );
+            gtk4_layer_shell::set_keyboard_mode(&*window, gtk4_layer_shell::KeyboardMode::OnDemand);
             gtk4_layer_shell::set_layer(&*window, gtk4_layer_shell::Layer::Overlay);
 
             key_event_controller.connect_key_pressed(move |_controller, key, _keycode, _state| {

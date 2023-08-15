@@ -19,7 +19,7 @@ use directories_next as dirs;
 use monitors::hypr_monitors::{
     get_current_monitor_hash, save_hypr_monitor_data, set_hypr_monitors_from_file,
 };
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use std::{
     env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::Command, thread,
     time::Duration,
