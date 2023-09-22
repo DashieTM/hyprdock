@@ -9,9 +9,10 @@ license = "GPL-3.0-only"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-home = { version = "0.5.4" }
-serde = "1.0.158"
-serde_derive = "1.0.158"
+directories-next = "2.0.0"
+serde = { version = "1.0.158", features = ["derive"] }
+serde_json = "*"
+json = "*"
 toml = "0.7.3"
-gtk = "0.17"
+gtk = { version = "0.17.1", package = "gtk" }
 gtk-layer-shell = "0.6.1"

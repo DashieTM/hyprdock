@@ -15,16 +15,23 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-use serde_derive::Deserialize;
+use directories_next as dirs;
+use monitors::hypr_monitors::{
+    get_current_monitor_hash, save_hypr_monitor_data, set_hypr_monitors_from_file,
+};
+use serde::Deserialize;
 use std::{
-    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::Command, thread,
+    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::{Command, ExitCode}, thread,
     time::Duration,
 };
 use toml;
 
 pub mod gui;
+pub mod monitors;
 
-const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
+fn default_config() -> String {
+    format!(
+        r#"monitor_name = 'eDP-1'
         default_external_mode = 'extend'
         open_bar_command = 'eww open bar'
         close_bar_command = 'eww close-all'
@@ -40,7 +47,14 @@ const DEFAULT_CONFIG: &'static str = r#"monitor_name = 'eDP-1'
         extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
         mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
         wallpaper_command = 'hyprctl dispatch hyprpaper'
-        css_string = ''"#;
+        css_string = ''
+        config_folder = {}"#,
+        create_config_dir()
+            .to_str()
+            .expect("Could not convert path to string")
+            .to_string()
+    )
+}
 
 #[derive(Deserialize, Clone)]
 struct HyprDock {
@@ -61,6 +75,7 @@ struct HyprDock {
     mirror_command: String,
     wallpaper_command: String,
     css_string: String,
+    monitor_config_path: String,
 }
 
 #[derive(Deserialize)]
@@ -82,21 +97,21 @@ struct HyprDockOptional {
     mirror_command: Option<String>,
     wallpaper_command: Option<String>,
     css_string: Option<String>,
+    monitor_config_path: Option<String>,
 }
 
-fn main() {
+fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         print_help();
-        return;
+        return ExitCode::FAILURE;
     }
 
     let dock = parse_config(
-        home::home_dir()
-            .unwrap()
-            .join(PathBuf::from(".config/hypr/hyprdock.toml"))
+        create_config_dir()
+            .join("hyprdock.toml")
             .to_str()
-            .unwrap(),
+            .expect("Could not convert path to string"),
     );
 
     let mut iter = args.iter();
@@ -115,20 +130,75 @@ fn main() {
             "--suspend" | "-su" => dock.lock_system(),
             "--utility" | "-u" => dock.utility(),
             "--wallpaper" | "-w" => dock.wallpaper(),
+            "--export" | "-ex" => {
+                let next_token = iter.next();
+                if next_token.is_none() {
+                    save_hypr_monitor_data(dock.monitor_config_path.clone(), None, None);
+                    return ExitCode::SUCCESS;
+                }
+                if next_token.unwrap().chars().next().unwrap() == '-' {
+                    print_help();
+                    return ExitCode::FAILURE;
+                }
+                save_hypr_monitor_data(dock.monitor_config_path.clone(), next_token, None);
+                iteration += 1;
+            }
+            "--import" | "-in" => {
+                let next_token = iter.next();
+                if next_token.is_none() {
+                    set_hypr_monitors_from_file(dock.monitor_config_path.clone(), None, None);
+                    return ExitCode::SUCCESS;
+                }
+                if next_token.unwrap().chars().next().unwrap() == '-' {
+                    print_help();
+                    return ExitCode::FAILURE;
+                }
+                set_hypr_monitors_from_file(dock.monitor_config_path.clone(), next_token, None);
+                iteration += 1;
+                dock.wallpaper();
+                dock.reload_bar();
+                dock.fix_bar();
+            }
             "--server" | "-s" => dock.socket_connect(),
             "--version" | "-v" => println!("0.2.1"),
             "--help" | "-h" => {
                 print_help();
-                return;
+                return ExitCode::SUCCESS;
             }
             "--gui" | "-g" => dock.run_gui(),
             x => {
                 println!("Could not parse {}", x);
                 print_help();
-                return;
+                return ExitCode::FAILURE;
             }
         }
     }
+    ExitCode::SUCCESS
+}
+
+fn create_config_dir() -> PathBuf {
+    let maybe_config_dir = dirs::ProjectDirs::from("com", "dashie", "hyprdock");
+    if maybe_config_dir.is_none() {
+        panic!("Could not get config directory");
+    }
+    let config = maybe_config_dir.unwrap();
+    let config_dir = config.config_dir();
+    if !config_dir.exists() {
+        fs::create_dir(config_dir).expect("Could not create config directory");
+    }
+    let monitor_config_path = config_dir.join("monitor_configs/");
+    if !monitor_config_path.exists() {
+        fs::create_dir(config_dir.join("monitor_configs/")).expect("Could not create monitor config directory");
+    }
+    let metadata = fs::metadata(config_dir);
+    if metadata.is_err() {
+        panic!("Could not check directory metadata for config file");
+    }
+    let file_path = config_dir.join("hyprdock.toml");
+    if !file_path.exists() {
+        fs::File::create(&file_path).expect("Could not write config file");
+    }
+    config_dir.join("")
 }
 
 fn print_help() {
@@ -141,6 +211,12 @@ fn print_help() {
             --suspend/-su:  Suspend the system
             --utility/-u:   Use utility command
             --wallpaper/-w  Wallpaper command
+            --export/-ex:   Export current monitor config
+                            optional name for import
+                            usage: hyprdock --export configname OR hyprdock --export
+            --import/-in:   Import a monitor config
+                            optional name for import 
+                            usage: hyprdock --import configname OR hyprdock --import
             --server/-s:    daemon version
                             automatically handles actions on laptop lid close and open.
             --gui/-g:       Launch GUI version
@@ -152,11 +228,11 @@ fn print_help() {
 fn parse_config(path: &str) -> HyprDock {
     let contents = match fs::read_to_string(path) {
         Ok(c) => c,
-        Err(_) => String::from(DEFAULT_CONFIG),
+        Err(_) => default_config(),
     };
     let parsed_conf: HyprDockOptional = match toml::from_str(&contents) {
         Ok(d) => d,
-        Err(_) => toml::from_str(DEFAULT_CONFIG).unwrap(),
+        Err(_) => toml::from_str(&default_config()).unwrap(),
     };
     let parsed_monitor = parsed_conf
         .monitor_name
@@ -222,6 +298,12 @@ fn parse_config(path: &str) -> HyprDock {
             .wallpaper_command
             .unwrap_or_else(|| String::from("hyprctl dispatch exec hyprpaper")),
         css_string: parsed_conf.css_string.unwrap_or_else(|| String::from("")),
+        monitor_config_path: parsed_conf.monitor_config_path.unwrap_or_else(|| {
+            create_config_dir()
+                .to_str()
+                .expect("Could not convert path to string")
+                .to_string()
+        }),
     }
 }
 
@@ -289,7 +371,28 @@ impl HyprDock {
         match event {
             "button/lid LID close\n" => self.handle_close(),
             "button/lid LID open\n" => self.handle_open(),
-            "jack/videoout VIDEOOUT plug\n" => self.add_monitor(),
+            "jack/videoout VIDEOOUT plug\n" => {
+                let monitor_hash = get_current_monitor_hash(None);
+                let path =
+                    PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
+                if !path.exists() {
+                    self.add_monitor();
+                    save_hypr_monitor_data(
+                        self.monitor_config_path.clone(),
+                        None,
+                        Some(monitor_hash),
+                    );
+                } else {
+                    set_hypr_monitors_from_file(
+                        self.monitor_config_path.clone(),
+                        None,
+                        Some(monitor_hash),
+                    );
+                }
+                self.wallpaper();
+                self.reload_bar();
+                self.fix_bar();
+            }
             "jack/videoout VIDEOOUT unplug\n" => self.internal_monitor(),
             _ => {}
         }
