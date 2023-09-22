@@ -2,7 +2,6 @@
 A small utility to handle automatic monitor docking.
 
 ## Breaking Changes
-- usage of gtk4-layer-shell instead of gtk3-layer-shell
 - change of config directory from hyprland config directory to hyprdock directory
 
 ## HardRequirements
