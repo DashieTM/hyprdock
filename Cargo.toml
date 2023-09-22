@@ -1,6 +1,6 @@
 [package]
 name = "hyprdock"
-version = "0.3.6"
+version = "0.3.7"
 edition = "2021"
 description = "A small program to handle external pluggable screens with hyprland and acpid"
 repository = "https://github.com/DashieTM/hyprdock"
