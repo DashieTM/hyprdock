@@ -21,7 +21,7 @@ use monitors::hypr_monitors::{
 };
 use serde::Deserialize;
 use std::{
-    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::Command, thread,
+    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::{Command, ExitCode}, thread,
     time::Duration,
 };
 use toml;
@@ -100,11 +100,11 @@ struct HyprDockOptional {
     monitor_config_path: Option<String>,
 }
 
-fn main() {
+fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         print_help();
-        return;
+        return ExitCode::FAILURE;
     }
 
     let dock = parse_config(
@@ -134,11 +134,11 @@ fn main() {
                 let next_token = iter.next();
                 if next_token.is_none() {
                     save_hypr_monitor_data(dock.monitor_config_path.clone(), None, None);
-                    return;
+                    return ExitCode::SUCCESS;
                 }
                 if next_token.unwrap().chars().next().unwrap() == '-' {
                     print_help();
-                    return;
+                    return ExitCode::FAILURE;
                 }
                 save_hypr_monitor_data(dock.monitor_config_path.clone(), next_token, None);
                 iteration += 1;
@@ -147,11 +147,11 @@ fn main() {
                 let next_token = iter.next();
                 if next_token.is_none() {
                     set_hypr_monitors_from_file(dock.monitor_config_path.clone(), None, None);
-                    return;
+                    return ExitCode::SUCCESS;
                 }
                 if next_token.unwrap().chars().next().unwrap() == '-' {
                     print_help();
-                    return;
+                    return ExitCode::FAILURE;
                 }
                 set_hypr_monitors_from_file(dock.monitor_config_path.clone(), next_token, None);
                 iteration += 1;
@@ -163,16 +163,17 @@ fn main() {
             "--version" | "-v" => println!("0.2.1"),
             "--help" | "-h" => {
                 print_help();
-                return;
+                return ExitCode::SUCCESS;
             }
             "--gui" | "-g" => dock.run_gui(),
             x => {
                 println!("Could not parse {}", x);
                 print_help();
-                return;
+                return ExitCode::FAILURE;
             }
         }
     }
+    ExitCode::SUCCESS
 }
 
 fn create_config_dir() -> PathBuf {

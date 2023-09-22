@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{monitors::hypr_monitors::save_hypr_monitor_data, HyprDock};
 pub use gtk::{prelude::*, Button};
-use gtk4 as gtk;
+use gtk::{self, Window, StyleContext, gdk};
 use std::rc::Rc;
 
 impl HyprDock {
@@ -29,11 +29,10 @@ impl HyprDock {
             .build();
 
         app.connect_startup(move |_| {
-            adw::init().unwrap();
+            gtk::init().unwrap();
             dock1.load_css();
         });
         app.connect_activate(move |app| {
-            let key_event_controller = gtk::EventControllerKey::new();
             let apprc = Rc::new(app.clone());
             let app1 = apprc.clone();
             let app2 = apprc.clone();
@@ -110,54 +109,53 @@ impl HyprDock {
                 app5.quit();
             });
 
-            main_box.append(&internal);
-            main_box.append(&external);
-            main_box.append(&extend);
-            main_box.append(&mirror);
-            main_box.append(&export);
+            main_box.add(&internal);
+            main_box.add(&external);
+            main_box.add(&extend);
+            main_box.add(&mirror);
+            main_box.add(&export);
 
             let window = Rc::new(
-                adw::ApplicationWindow::builder()
+                Window::builder()
                     .application(app)
                     .title("Monitor Portal")
-                    .content(&main_box)
+                    .child(&main_box)
                     .name("MainWindow")
                     .build(),
             );
-            let window_ref = window.clone();
 
-            gtk4_layer_shell::init_for_window(&*window);
+            gtk_layer_shell::init_for_window(&*window);
             // gtk4_layer_shell::set_keyboard_interactivity(&window, true);
-            gtk4_layer_shell::set_keyboard_mode(&*window, gtk4_layer_shell::KeyboardMode::OnDemand);
-            gtk4_layer_shell::set_layer(&*window, gtk4_layer_shell::Layer::Overlay);
+            gtk_layer_shell::set_keyboard_interactivity(&*window, true);
+            gtk_layer_shell::set_layer(&*window, gtk_layer_shell::Layer::Overlay);
 
-            key_event_controller.connect_key_pressed(move |_controller, key, _keycode, _state| {
-                match key {
-                    gtk4::gdk::Key::Escape => {
-                        window_ref.close();
+            window.connect_key_press_event(move |window, event| {
+                match event.keyval() {
+                    gtk::gdk::keys::constants::Escape => {
+                        window.close();
                         gtk::Inhibit(true)
                     }
-                    gtk4::gdk::Key::_1 => {
+                    gtk::gdk::keys::constants::_1 => {
                         config_ref6.internal_monitor();
                         app6.quit();
                         gtk::Inhibit(true)
                     }
-                    gtk4::gdk::Key::_2 => {
+                    gtk::gdk::keys::constants::_2 => {
                         config_ref6.external_monitor();
                         app6.quit();
                         gtk::Inhibit(true)
                     }
-                    gtk4::gdk::Key::_3 => {
+                    gtk::gdk::keys::constants::_3 => {
                         config_ref6.extend_monitor();
                         app6.quit();
                         gtk::Inhibit(true)
                     }
-                    gtk4::gdk::Key::_4 => {
+                    gtk::gdk::keys::constants::_4 => {
                         config_ref6.mirror_monitor();
                         app6.quit();
                         gtk::Inhibit(true)
                     }
-                    gtk4::gdk::Key::_5 => {
+                    gtk::gdk::keys::constants::_5 => {
                         save_hypr_monitor_data(config_ref6.monitor_config_path.clone(), None, None);
                         app6.quit();
                         gtk::Inhibit(true)
@@ -166,19 +164,18 @@ impl HyprDock {
                 }
             });
 
-            window.add_controller(key_event_controller);
-            window.present();
+            window.show_all();
         });
         app.run_with_args(&[""]);
     }
     fn load_css(&self) {
         let context_provider = gtk::CssProvider::new();
         if self.css_string != "" {
-            context_provider.load_from_path(&self.css_string);
+            context_provider.load_from_path(&self.css_string).unwrap_or_else(|_|{});
         }
 
-        gtk::style_context_add_provider_for_display(
-            &gtk::gdk::Display::default().unwrap(),
+        StyleContext::add_provider_for_screen(
+            &gdk::Screen::default().unwrap(),
             &context_provider,
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
