@@ -1,0 +1,21 @@
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: nightly-rust
+        uses: actions-rs/toolchain@v1
+        with: 
+          profile: minimal
+          toolchain: nightly
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/release/reset
