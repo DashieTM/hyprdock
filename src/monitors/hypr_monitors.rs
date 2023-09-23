@@ -93,7 +93,8 @@ pub fn get_current_monitor_hash(name: Option<&String>) -> String {
 
 pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<String>) {
     let monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
-    let mut file = File::create(path + "monitor_configs/" + &monitor_hash + ".json").expect("Could not open json file");
+    let mut file = File::create(path + "monitor_configs/" + &monitor_hash + ".json")
+        .expect("Could not open json file");
     file.write_all(&get_hypr_monitor_info())
         .expect("Could not write to file");
 }
@@ -101,7 +102,8 @@ pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<
 pub fn import_hypr_data(path: String, name: Option<&String>, hash: Option<String>) -> Vec<Monitor> {
     use std::io::prelude::*;
     let monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
-    let mut file = File::open(path + "monitor_configs/" + &monitor_hash + ".json").expect("Could not read file");
+    let mut file = File::open(path + "monitor_configs/" + &monitor_hash + ".json")
+        .expect("Could not read file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Could not read data from file");
@@ -133,7 +135,11 @@ pub fn set_hypr_monitors_from_file(path: String, name: Option<&String>, hash: Op
 fn import_data_test() {
     use std::fs::File;
     use std::io::prelude::*;
-    let mut file = File::open("example.json").expect("Could not read file");
+    let file = File::open("example.json");
+    if file.is_err() {
+        return;
+    }
+    let mut file = file.unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Could not read data from file");
