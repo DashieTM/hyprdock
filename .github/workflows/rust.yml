@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install gtk
-      run: sudo apt install libgtk-3-dev libgtk-layer-shell0 -y
+      run: sudo apt install libgtk-3-dev libgtk-layer-shell0 libgtk-layer-shell-dev -y
     - name: nightly-rust
       uses: actions-rs/toolchain@v1
       with: 
