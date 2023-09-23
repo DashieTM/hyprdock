@@ -70,12 +70,13 @@ impl Monitor {
 #[test]
 fn monitor_import() {
     use std::{fs::File, io::Write};
-    let output = Command::new("hyprctl")
-        .args(["-j", "monitors"])
-        .output()
-        .expect("Could not save output to file")
-        .stdout;
+    let output = Command::new("hyprctl").args(["-j", "monitors"]).output();
 
+    if output.is_err() {
+        println!("hyprctl not found, skipping test");
+        return;
+    }
+    let output = output.unwrap().stdout;
     let mut file = File::create("example.json").expect("Could not open json file");
     assert!(file.write_all(&output).is_ok());
 }
