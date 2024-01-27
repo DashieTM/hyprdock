@@ -21,7 +21,12 @@ use monitors::hypr_monitors::{
 };
 use serde::Deserialize;
 use std::{
-    env, fs, io::Read, os::unix::net::UnixStream, path::PathBuf, process::{Command, ExitCode}, thread,
+    env, fs,
+    io::Read,
+    os::unix::net::UnixStream,
+    path::PathBuf,
+    process::{Command, ExitCode},
+    thread,
     time::Duration,
 };
 use toml;
@@ -188,7 +193,8 @@ fn create_config_dir() -> PathBuf {
     }
     let monitor_config_path = config_dir.join("monitor_configs/");
     if !monitor_config_path.exists() {
-        fs::create_dir(config_dir.join("monitor_configs/")).expect("Could not create monitor config directory");
+        fs::create_dir(config_dir.join("monitor_configs/"))
+            .expect("Could not create monitor config directory");
     }
     let metadata = fs::metadata(config_dir);
     if metadata.is_err() {

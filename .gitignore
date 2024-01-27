@@ -1,3 +1,7 @@
 /target
 cargo.lock
 *.tar.gz
+/pkg
+hyprdock.png
+hyprdock.desktop
+*.pkg.tar.zst
