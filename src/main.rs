@@ -405,8 +405,14 @@ impl HyprDock {
     }
 
     pub fn socket_connect(&self) {
-        let mut sock =
-            UnixStream::connect("/var/run/acpid.socket").expect("failed to connect to socket");
+        let sock = UnixStream::connect("/var/run/acpid.socket");
+        if sock.is_err() {
+            println!(
+                "Could not connect to acpid socket, do you have the service installed and running?"
+            );
+            return;
+        }
+        let mut sock = sock.unwrap();
         loop {
             let mut buf = [0; 1024];
             let n = sock.read(&mut buf).expect("failed to read from socket");
