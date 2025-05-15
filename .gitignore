@@ -1,7 +1,8 @@
+/.direnv
 /target
-cargo.lock
-*.tar.gz
 /pkg
+
 hyprdock.png
 hyprdock.desktop
+*.tar.gz
 *.pkg.tar.zst

@@ -16,8 +16,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 use crate::{monitors::hypr_monitors::save_hypr_monitor_data, HyprDock};
+use gtk::{self, gdk, glib::Propagation, StyleContext, Window};
 pub use gtk::{prelude::*, Button};
-use gtk::{self, Window, StyleContext, gdk};
+use gtk_layer_shell::LayerShell;
 use std::rc::Rc;
 
 impl HyprDock {
@@ -124,44 +125,41 @@ impl HyprDock {
                     .build(),
             );
 
-            gtk_layer_shell::init_for_window(&*window);
-            // gtk4_layer_shell::set_keyboard_interactivity(&window, true);
-            gtk_layer_shell::set_keyboard_interactivity(&*window, true);
-            gtk_layer_shell::set_layer(&*window, gtk_layer_shell::Layer::Overlay);
+            window.init_layer_shell();
+            window.set_keyboard_interactivity(true);
+            window.set_layer(gtk_layer_shell::Layer::Overlay);
 
-            window.connect_key_press_event(move |window, event| {
-                match event.keyval() {
-                    gtk::gdk::keys::constants::Escape => {
-                        window.close();
-                        gtk::Inhibit(true)
-                    }
-                    gtk::gdk::keys::constants::_1 => {
-                        config_ref6.internal_monitor();
-                        app6.quit();
-                        gtk::Inhibit(true)
-                    }
-                    gtk::gdk::keys::constants::_2 => {
-                        config_ref6.external_monitor();
-                        app6.quit();
-                        gtk::Inhibit(true)
-                    }
-                    gtk::gdk::keys::constants::_3 => {
-                        config_ref6.extend_monitor();
-                        app6.quit();
-                        gtk::Inhibit(true)
-                    }
-                    gtk::gdk::keys::constants::_4 => {
-                        config_ref6.mirror_monitor();
-                        app6.quit();
-                        gtk::Inhibit(true)
-                    }
-                    gtk::gdk::keys::constants::_5 => {
-                        save_hypr_monitor_data(config_ref6.monitor_config_path.clone(), None, None);
-                        app6.quit();
-                        gtk::Inhibit(true)
-                    }
-                    _ => gtk::Inhibit(false),
+            window.connect_key_press_event(move |window, event| match event.keyval() {
+                gtk::gdk::keys::constants::Escape => {
+                    window.close();
+                    Propagation::Stop
                 }
+                gtk::gdk::keys::constants::_1 => {
+                    config_ref6.internal_monitor();
+                    app6.quit();
+                    Propagation::Stop
+                }
+                gtk::gdk::keys::constants::_2 => {
+                    config_ref6.external_monitor();
+                    app6.quit();
+                    Propagation::Stop
+                }
+                gtk::gdk::keys::constants::_3 => {
+                    config_ref6.extend_monitor();
+                    app6.quit();
+                    Propagation::Stop
+                }
+                gtk::gdk::keys::constants::_4 => {
+                    config_ref6.mirror_monitor();
+                    app6.quit();
+                    Propagation::Stop
+                }
+                gtk::gdk::keys::constants::_5 => {
+                    save_hypr_monitor_data(config_ref6.monitor_config_path.clone(), None, None);
+                    app6.quit();
+                    Propagation::Stop
+                }
+                _ => Propagation::Proceed,
             });
 
             window.show_all();
@@ -171,7 +169,9 @@ impl HyprDock {
     fn load_css(&self) {
         let context_provider = gtk::CssProvider::new();
         if self.css_string != "" {
-            context_provider.load_from_path(&self.css_string).unwrap_or_else(|_|{});
+            context_provider
+                .load_from_path(&self.css_string)
+                .unwrap_or_else(|_| {});
         }
 
         StyleContext::add_provider_for_screen(

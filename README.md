@@ -11,7 +11,7 @@ A small utility to handle automatic monitor docking.
 These are programs that were meant to be used with hyprdock, however, the toml allows you to specify the commands you would like to run.
 So feel free to test out other programs.
 - Hyprland
-- swaylock
+- hyprlock
 - systemd
 
 ## behavior and features
@@ -30,29 +30,67 @@ So feel free to test out other programs.
 
 ## Example config
 ### path needs to be $HOME/.config/hypr/hyprdock.toml
-~~~
+# example toml file
 monitor_name = "eDP-1"
-open_bar_command = "eww open bar"
-close_bar_command = "eww close-all"
-reload_bar_command = "eww reload"
-suspend_command = "systemctl suspend"
-lock_command = "swaylock -c 000000"
-utility_command = "playerctl --all-players -a pause"
-get_monitors_command = "hyprctl monitors"
-enable_internal_monitor_command = "hyprctl keyword monitor eDP-1,highrr,0x0,1"
-disable_internal_monitor_command = "hyprctl keyword monitor eDP-1,disabled"
-enable_external_monitor_command = "hyprctl keyword monitor ,highrr,0x0,1"
-disable_external_monitor_command = "hyprctl keyword monitor ,disabled"
-extend_command = "hyprctl keyword monitor ,highrr,1920x0,1"
-mirror_command = "hyprctl keyword monitor ,highrr,0x0,1"
-wallpaper_command = "hyprctl dispatch hyprpaper"
+# external or mirror
+default_external_mode = "extend"
 css_string = ""
-~~~
 
-### multiple commands in 1 line
-~~~
-# make sure to leave a blank space between the start and end of the ;;, which marks the end and start of commands.
-utility_command = "yourcommand args ;; yourothercommand args"
+[open_bar_command]
+base = "ironbar"
+args = []
+
+[close_bar_command]
+base = "killall"
+args = ["ironbar"]
+
+[reload_bar_command]
+base = "ironbar"
+args = []
+
+[suspend_command]
+base = "systemctl"
+args = ["suspend"]
+
+[lock_command]
+base = "hyprlock"
+args = []
+
+[utility_command]
+base = "playerctl"
+args = ["--all-players", "-a", "pause"]
+
+[get_monitors_command]
+base = "hyprctl"
+args = ["monitors"]
+
+[enable_internal_monitor_command]
+base = "hyprctl"
+args = ["keyword", "monitor", "eDP-1,highres,0x0,1"]
+
+[disable_internal_monitor_command]
+base = "hyprctl"
+args = ["keyword", "monitor", "eDP-1,disabled"]
+
+[enable_external_monitor_command]
+base = "hyprctl"
+args = ["keyword", "monitor", ",highres,0x0,1"]
+
+[disable_external_monitor_command]
+base = "hyprctl"
+args = ["keyword", "monitor", ",disabled"]
+
+[extend_command]
+base = "hyprctl"
+args = ["keyword", "monitor", ",highres,1920x0,1"]
+
+[mirror_command]
+base = "hyprctl"
+args = ["keyword", "monitor", ",highres,0x0,1"]
+
+[wallpaper_command]
+base = "hyprctl"
+args = ["dispatch", "hyprpaper"]
 ~~~
 
 ### extend and mirror

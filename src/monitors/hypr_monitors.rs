@@ -91,18 +91,24 @@ pub fn get_current_monitor_hash(name: Option<&String>) -> String {
     s.finish().to_string()
 }
 
-pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<String>) {
-    let monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
+pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<&String>) {
+    let monitor_name = get_current_monitor_hash(name);
+    let monitor_hash = hash.unwrap_or(&monitor_name);
     let mut file = File::create(path + "monitor_configs/" + &monitor_hash + ".json")
         .expect("Could not open json file");
     file.write_all(&get_hypr_monitor_info())
         .expect("Could not write to file");
 }
 
-pub fn import_hypr_data(path: String, name: Option<&String>, hash: Option<String>) -> Vec<Monitor> {
+pub fn import_hypr_data(
+    path: String,
+    name: Option<&String>,
+    hash: Option<&String>,
+) -> Vec<Monitor> {
     use std::io::prelude::*;
-    let monitor_hash = hash.unwrap_or(get_current_monitor_hash(name));
-    let mut file = File::open(path + "monitor_configs/" + &monitor_hash + ".json")
+    let monitor_name = &get_current_monitor_hash(name);
+    let monitor_hash = hash.unwrap_or(monitor_name);
+    let mut file = File::open(path + "monitor_configs/" + monitor_hash + ".json")
         .expect("Could not read file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
@@ -124,7 +130,7 @@ pub fn set_hypr_monitors_from_hyprvec(monitors: Vec<HyprMonitor>) {
     }
 }
 
-pub fn set_hypr_monitors_from_file(path: String, name: Option<&String>, hash: Option<String>) {
+pub fn set_hypr_monitors_from_file(path: String, name: Option<&String>, hash: Option<&String>) {
     let monitors = import_hypr_data(path, name, hash);
     for monitor in monitors {
         monitor.enable_hypr_monitor();

@@ -1,67 +1,34 @@
 [{
     "id": 0,
-    "name": "DP-1",
-    "description": "ASUSTek COMPUTER INC XG349C  (DP-1)",
-    "make": "ASUSTek COMPUTER INC",
-    "model": "XG349C",
-    "serial": "",
-    "width": 3440,
-    "height": 1440,
-    "refreshRate": 179.998993,
-    "x": 2560,
-    "y": 0,
-    "activeWorkspace": {
-        "id": 2,
-        "name": "2"
-    },
-    "reserved": [0, 30, 0, 0],
-    "scale": 1.00,
-    "transform": 0,
-    "focused": false,
-    "dpmsStatus": true,
-    "vrr": true
-},{
-    "id": 1,
-    "name": "DP-2",
-    "description": "Lenovo Group Limited LEN LT2452pwC 0x33344B41 (DP-2)",
+    "name": "eDP-1",
+    "description": "Lenovo Group Limited 0x8AAE",
     "make": "Lenovo Group Limited",
-    "model": "LEN LT2452pwC",
-    "serial": "0x33344B41",
-    "width": 1920,
-    "height": 1200,
-    "refreshRate": 59.950001,
-    "x": 6000,
+    "model": "0x8AAE",
+    "serial": "",
+    "width": 2944,
+    "height": 1840,
+    "refreshRate": 59.99900,
+    "x": -1024,
     "y": 0,
     "activeWorkspace": {
-        "id": 3,
-        "name": "3"
+        "id": 4,
+        "name": "4"
     },
-    "reserved": [0, 0, 0, 0],
-    "scale": 1.00,
-    "transform": 1,
-    "focused": false,
-    "dpmsStatus": true,
-    "vrr": false
-},{
-    "id": 2,
-    "name": "DP-3",
-    "description": "ASUSTek COMPUTER INC ROG PG278QR #ASOWXFZDWU/d (DP-3)",
-    "make": "ASUSTek COMPUTER INC",
-    "model": "ROG PG278QR",
-    "serial": "#ASOWXFZDWU/d",
-    "width": 2560,
-    "height": 1440,
-    "refreshRate": 165.000000,
-    "x": 0,
-    "y": 0,
-    "activeWorkspace": {
-        "id": 1,
-        "name": "1"
+    "specialWorkspace": {
+        "id": 0,
+        "name": ""
     },
-    "reserved": [0, 0, 0, 0],
-    "scale": 1.00,
+    "reserved": [0, 32, 0, 0],
+    "scale": 2.00,
     "transform": 0,
     "focused": true,
     "dpmsStatus": true,
-    "vrr": false
+    "vrr": false,
+    "solitary": "0",
+    "activelyTearing": false,
+    "directScanoutTo": "0",
+    "disabled": false,
+    "currentFormat": "XRGB8888",
+    "mirrorOf": "none",
+    "availableModes": ["2944x1840@60.00Hz","2944x1840@90.00Hz","1920x1200@60.00Hz","1920x1080@60.00Hz","1600x1200@60.00Hz","1680x1050@60.00Hz","1280x1024@60.00Hz","1440x900@60.00Hz","1280x800@60.00Hz","1280x720@60.00Hz","1024x768@60.00Hz","800x600@60.00Hz","640x480@60.00Hz"]
 }]
