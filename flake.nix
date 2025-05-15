@@ -9,36 +9,31 @@
     };
   };
 
-  outputs = inputs @ { flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+  outputs = inputs @ {flake-parts, ...}:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux" "aarch64-linux"];
 
-      perSystem =
-        { config
-        , self'
-        , inputs'
-        , pkgs
-        , system
-        , ...
-        }:
-        {
-          devShells.default = pkgs.mkShell {
-            inputsFrom = builtins.attrValues self'.packages;
-            packages = with pkgs; [
-              cargo
-              rustc
-            ];
-          };
-
-          packages =
-            let
-              lockFile = ./Cargo.lock;
-            in
-            rec {
-              hyprdock = pkgs.callPackage ./nix/default.nix { inherit inputs lockFile; };
-              default = hyprdock;
-            };
+      perSystem = {
+        self',
+        pkgs,
+        ...
+      }: {
+        devShells.default = pkgs.mkShell {
+          inputsFrom = builtins.attrValues self'.packages;
+          packages = with pkgs; [
+            cargo
+            rustc
+            clippy
+            rust-analyzer
+          ];
         };
+        packages = let
+          lockFile = ./Cargo.lock;
+        in rec {
+          hyprdock = pkgs.callPackage ./nix/default.nix {inherit inputs lockFile;};
+          default = hyprdock;
+        };
+      };
       flake = _: rec {
         nixosModules.home-manager = homeManagerModules.default;
         homeManagerModules = rec {

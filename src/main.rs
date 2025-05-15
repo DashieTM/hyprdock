@@ -19,7 +19,9 @@ use directories_next as dirs;
 use monitors::hypr_monitors::{
     get_current_monitor_hash, save_hypr_monitor_data, set_hypr_monitors_from_file,
 };
-use serde::Deserialize;
+use once_cell::sync::Lazy;
+use optional_struct::{Applicable, optional_struct};
+use serde::{Deserialize, Serialize};
 use std::{
     env, fs,
     io::Read,
@@ -34,75 +36,117 @@ use toml;
 pub mod gui;
 pub mod monitors;
 
-fn default_config() -> String {
-    format!(
-        r#"monitor_name = 'eDP-1'
-        default_external_mode = 'extend'
-        open_bar_command = 'eww open bar'
-        close_bar_command = 'eww close-all'
-        reload_bar_command = 'eww reload'
-        suspend_command = 'systemctl suspend'
-        lock_command = 'swaylock -c 000000'
-        utility_command = 'playerctl --all-players -a pause'
-        get_monitors_command = 'hyprctl monitors'
-        enable_internal_monitor_command = 'hyprctl keyword monitor eDP-1,highrr,0x0,1'
-        disable_internal_monitor_command = 'hyprctl keyword monitor eDP-1,disabled'
-        enable_external_monitor_command = 'hyprctl keyword monitor ,highrr,0x0,1'
-        disable_external_monitor_command = 'hyprctl keyword monitor ,disabled'
-        extend_command = 'hyprctl keyword monitor ,highrr,1920x0,1'
-        mirror_command = 'hyprctl keyword monitor ,highrr,0x0,1'
-        wallpaper_command = 'hyprctl dispatch hyprpaper'
-        css_string = ''
-        config_folder = {}"#,
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+struct HyprdockCommand {
+    base: String,
+    args: Vec<String>,
+}
+
+impl HyprdockCommand {
+    pub fn empty() -> Self {
+        Self {
+            base: "".into(),
+            args: Vec::new(),
+        }
+    }
+    pub fn new(base: &'static str, args: &[&str]) -> Self {
+        Self {
+            base: base.trim().into(),
+            args: args
+                .into_iter()
+                .map(|val| String::from(*val))
+                .collect::<Vec<String>>(),
+        }
+    }
+    pub fn single(base: &'static str) -> Self {
+        Self {
+            base: base.trim().into(),
+            args: Vec::new(),
+        }
+    }
+
+    pub fn format(&self, monitor: &String) -> Self {
+        let mut new_args = Vec::new();
+        for arg in self.args.iter() {
+            let processed_arg = arg.replace("{}", &monitor);
+            new_args.push(processed_arg);
+        }
+        Self {
+            base: self.base.clone(),
+            args: new_args,
+        }
+    }
+}
+
+const DEFAULT_CONFIG: Lazy<OptionalHyprDock> = Lazy::new(|| OptionalHyprDock {
+    monitor_name: Some("eDP-1".into()),
+    default_external_mode: Some("extend".into()),
+    open_bar_command: Some(HyprdockCommand::empty()),
+    close_bar_command: Some(HyprdockCommand::empty()),
+    reload_bar_command: Some(HyprdockCommand::empty()),
+    suspend_command: Some(HyprdockCommand::new("systemctl", &["suspend"])),
+    lock_command: Some(HyprdockCommand::single("hyprlock")),
+    utility_command: Some(HyprdockCommand::empty()),
+    get_monitors_command: Some(HyprdockCommand::new("hyprctl", &["monitors", "all"])),
+    enable_internal_monitor_command: Some(HyprdockCommand::new(
+        "hyprctl",
+        &["keyword", "monitor", "{},preferred,0x0,1"],
+    )),
+    disable_internal_monitor_command: Some(HyprdockCommand::new(
+        "hyprctl",
+        &["keyword", "monitor", "{},disabled"],
+    )),
+    enable_external_monitor_command: Some(HyprdockCommand::new(
+        "hyprctl",
+        &["keyword", "monitor", ",preferred,0x0,1"],
+    )),
+    disable_external_monitor_command: Some(HyprdockCommand::new(
+        "hyprctl",
+        &["keyword", "monitor", ",disabled"],
+    )),
+    extend_command: Some(HyprdockCommand::new(
+        "hyprctl",
+        &["keyword", "monitor", ",preferred,1920x0,1"],
+    )),
+    mirror_command: Some(HyprdockCommand::new(
+        "hyprctl",
+        &["keyword", "monitor", ",preferred,0x0,1"],
+    )),
+    wallpaper_command: Some(HyprdockCommand::empty()),
+    css_string: Some("".into()),
+    monitor_config_path: Some(
         create_config_dir()
             .to_str()
             .expect("Could not convert path to string")
-            .to_string()
-    )
+            .to_string(),
+    ),
+});
+
+fn default_config_string() -> String {
+    toml::to_string(&DEFAULT_CONFIG.to_owned()).unwrap()
 }
 
-#[derive(Deserialize, Clone)]
+#[optional_struct]
+#[derive(Deserialize, Serialize, Clone)]
 struct HyprDock {
     monitor_name: String,
     default_external_mode: String,
-    open_bar_command: String,
-    close_bar_command: String,
-    reload_bar_command: String,
-    suspend_command: String,
-    lock_command: String,
-    utility_command: String,
-    get_monitors_command: String,
-    enable_internal_monitor_command: String,
-    disable_internal_monitor_command: String,
-    enable_external_monitor_command: String,
-    disable_external_monitor_command: String,
-    extend_command: String,
-    mirror_command: String,
-    wallpaper_command: String,
+    open_bar_command: HyprdockCommand,
+    close_bar_command: HyprdockCommand,
+    reload_bar_command: HyprdockCommand,
+    suspend_command: HyprdockCommand,
+    lock_command: HyprdockCommand,
+    utility_command: HyprdockCommand,
+    get_monitors_command: HyprdockCommand,
+    enable_internal_monitor_command: HyprdockCommand,
+    disable_internal_monitor_command: HyprdockCommand,
+    enable_external_monitor_command: HyprdockCommand,
+    disable_external_monitor_command: HyprdockCommand,
+    extend_command: HyprdockCommand,
+    mirror_command: HyprdockCommand,
+    wallpaper_command: HyprdockCommand,
     css_string: String,
     monitor_config_path: String,
-}
-
-#[derive(Deserialize)]
-struct HyprDockOptional {
-    monitor_name: Option<String>,
-    default_external_mode: Option<String>,
-    open_bar_command: Option<String>,
-    close_bar_command: Option<String>,
-    reload_bar_command: Option<String>,
-    suspend_command: Option<String>,
-    lock_command: Option<String>,
-    utility_command: Option<String>,
-    get_monitors_command: Option<String>,
-    enable_internal_monitor_command: Option<String>,
-    disable_internal_monitor_command: Option<String>,
-    enable_external_monitor_command: Option<String>,
-    disable_external_monitor_command: Option<String>,
-    extend_command: Option<String>,
-    mirror_command: Option<String>,
-    wallpaper_command: Option<String>,
-    css_string: Option<String>,
-    monitor_config_path: Option<String>,
 }
 
 fn main() -> ExitCode {
@@ -234,127 +278,66 @@ fn print_help() {
 fn parse_config(path: &str) -> HyprDock {
     let contents = match fs::read_to_string(path) {
         Ok(c) => c,
-        Err(_) => default_config(),
+        Err(_) => default_config_string(),
     };
-    let parsed_conf: HyprDockOptional = match toml::from_str(&contents) {
+    let parsed_conf: OptionalHyprDock = match toml::from_str(&contents) {
         Ok(d) => d,
-        Err(_) => toml::from_str(&default_config()).unwrap(),
+        Err(_) => DEFAULT_CONFIG.to_owned(),
     };
-    let parsed_monitor = parsed_conf
-        .monitor_name
-        .unwrap_or_else(|| String::from("eDP-1"));
-    HyprDock {
-        monitor_name: parsed_monitor.clone(),
-        default_external_mode: parsed_conf
-            .default_external_mode
-            .unwrap_or_else(|| String::from("extend")),
-        open_bar_command: parsed_conf
-            .open_bar_command
-            .unwrap_or_else(|| String::from("eww open bar")),
-        close_bar_command: parsed_conf
-            .close_bar_command
-            .unwrap_or_else(|| String::from("eww close-all")),
-        reload_bar_command: parsed_conf
-            .reload_bar_command
-            .unwrap_or_else(|| String::from("eww reload")),
-        suspend_command: parsed_conf
-            .suspend_command
-            .unwrap_or_else(|| String::from("systemctl suspend")),
-        lock_command: parsed_conf
-            .lock_command
-            .unwrap_or_else(|| String::from("swaylock -c 000000")),
-        utility_command: parsed_conf
-            .utility_command
-            .unwrap_or_else(|| String::from("playerctl --all-players -a pause")),
-        get_monitors_command: parsed_conf
-            .get_monitors_command
-            .unwrap_or_else(|| String::from("hyprctl monitors")),
-        enable_internal_monitor_command: parsed_conf
-            .enable_internal_monitor_command
-            .unwrap_or_else(|| {
-                format!(
-                    "hyprctl keyword monitor {},highrr,0x0,1",
-                    parsed_monitor.clone()
-                )
-            }),
-        disable_internal_monitor_command: parsed_conf
-            .disable_internal_monitor_command
-            .unwrap_or_else(|| {
-                format!(
-                    "hyprctl keyword monitor {},disabled",
-                    parsed_monitor.clone()
-                )
-            }),
-        enable_external_monitor_command: parsed_conf
-            .enable_external_monitor_command
-            .unwrap_or_else(|| String::from("hyprctl keyword monitor ,highrr,auto,1")),
-        disable_external_monitor_command: parsed_conf
-            .disable_external_monitor_command
-            .unwrap_or_else(|| String::from("hyprctl keyword monitor ,disabled")),
-        extend_command: parsed_conf
-            .extend_command
-            .unwrap_or_else(|| String::from("hyprctl keyword monitor ,highrr,auto,1")),
-        mirror_command: parsed_conf.mirror_command.unwrap_or_else(|| {
-            format!(
-                "hyprctl keyword monitor ,highrr,auto,1,mirror,{}",
-                parsed_monitor
-            )
-        }),
-        wallpaper_command: parsed_conf
-            .wallpaper_command
-            .unwrap_or_else(|| String::from("hyprctl dispatch exec hyprpaper")),
-        css_string: parsed_conf.css_string.unwrap_or_else(|| String::from("")),
-        monitor_config_path: parsed_conf.monitor_config_path.unwrap_or_else(|| {
-            create_config_dir()
-                .to_str()
-                .expect("Could not convert path to string")
-                .to_string()
-        }),
-    }
+    parsed_conf.build(DEFAULT_CONFIG.to_owned().try_into().unwrap())
 }
 
 impl HyprDock {
-    pub fn execute_command(&self, command: &str) {
-        let toml_split: Vec<&str> = command.split(" ;; ").collect();
-        for toml_key in toml_split {
-            let command_split: Vec<&str> = toml_key.split(" ").collect();
-            let (first, rest) = command_split.split_first().unwrap();
-            if *first == "" {
-                return;
-            }
-            Command::new(first)
-                .args(rest)
-                .spawn()
-                .expect("Could not parse command, please check your toml");
+    pub fn execute_command(&self, command: HyprdockCommand) {
+        let base = command.base.trim();
+        if base.is_empty() {
+            return;
         }
+        Command::new(base)
+            .args(command.args)
+            .spawn()
+            .expect("Could not parse command, please check your toml");
     }
 
-    pub fn execute_command_with_output(&self, command: &str) -> Vec<u8> {
-        let command_split: Vec<&str> = command.split(" ").collect();
-        let (first, rest) = command_split.split_first().unwrap();
-        if *first == "" {
+    pub fn execute_command_with_output(&self, command: HyprdockCommand) -> Vec<u8> {
+        let base = command.base.trim();
+        if base.is_empty() {
             return Vec::new();
         }
-        Command::new(first)
-            .args(rest)
+        Command::new(base)
+            .args(command.args)
             .output()
             .expect("Could not parse command, please check your toml")
             .stdout
     }
 
     pub fn handle_close(&self) {
+        let monitor_hash = get_current_monitor_hash(None);
+        let path = PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
+        if path.exists() {
+            set_hypr_monitors_from_file(self.monitor_config_path.clone(), None, Some(monitor_hash));
+            return;
+        }
         if self.has_external_monitor() {
             self.external_monitor();
             thread::sleep(Duration::from_millis(1000));
             self.wallpaper();
             self.reload_bar();
+            save_hypr_monitor_data(self.monitor_config_path.clone(), None, Some(monitor_hash));
         } else {
             self.utility();
             self.lock_system();
+            save_hypr_monitor_data(self.monitor_config_path.clone(), None, Some(monitor_hash));
         }
     }
 
     pub fn handle_open(&self) {
+        let monitor_hash = get_current_monitor_hash(None);
+        let path = PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
+        if path.exists() {
+            set_hypr_monitors_from_file(self.monitor_config_path.clone(), None, Some(monitor_hash));
+            return;
+        }
         if self.is_internal_active() {
             return;
         }
@@ -363,6 +346,7 @@ impl HyprDock {
             self.wallpaper();
             self.reload_bar();
             self.fix_bar();
+            save_hypr_monitor_data(self.monitor_config_path.clone(), None, Some(monitor_hash));
             return;
         } else {
             self.internal_monitor();
@@ -370,14 +354,15 @@ impl HyprDock {
             self.wallpaper();
             self.reload_bar();
             self.fix_bar();
+            save_hypr_monitor_data(self.monitor_config_path.clone(), None, Some(monitor_hash));
         }
     }
 
     pub fn handle_event(&self, event: &str) {
         match event {
-            "button/lid LID close\n" => self.handle_close(),
-            "button/lid LID open\n" => self.handle_open(),
-            "jack/videoout VIDEOOUT plug\n" => {
+            _ if event.contains("LID close") => self.handle_close(),
+            _ if event.contains("LID open") => self.handle_open(),
+            _ if event.contains("VIDEOOUT plug") => {
                 let monitor_hash = get_current_monitor_hash(None);
                 let path =
                     PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
@@ -399,7 +384,25 @@ impl HyprDock {
                 self.reload_bar();
                 self.fix_bar();
             }
-            "jack/videoout VIDEOOUT unplug\n" => self.internal_monitor(),
+            _ if event.contains("VIDEOOUT unplug") => {
+                let monitor_hash = get_current_monitor_hash(None);
+                let path =
+                    PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
+                if path.exists() {
+                    set_hypr_monitors_from_file(
+                        self.monitor_config_path.clone(),
+                        None,
+                        Some(monitor_hash),
+                    );
+                    return;
+                }
+                self.internal_monitor();
+                set_hypr_monitors_from_file(
+                    self.monitor_config_path.clone(),
+                    None,
+                    Some(monitor_hash),
+                );
+            }
             _ => {}
         }
     }
@@ -423,32 +426,38 @@ impl HyprDock {
     }
 
     pub fn lock_system(&self) {
-        self.execute_command(self.lock_command.as_str());
-        self.execute_command(self.suspend_command.as_str());
+        self.execute_command(self.lock_command.format(&self.monitor_name));
+        self.execute_command(self.suspend_command.format(&self.monitor_name));
     }
 
     pub fn utility(&self) {
-        self.execute_command(self.utility_command.as_str());
+        self.execute_command(self.utility_command.format(&self.monitor_name));
     }
 
     pub fn extend_monitor(&self) {
         if !self.is_internal_active() {
             self.restart_internal();
         }
-        self.execute_command(self.extend_command.as_str());
+        self.execute_command(self.extend_command.format(&self.monitor_name));
     }
 
     pub fn mirror_monitor(&self) {
         if !self.is_internal_active() {
             self.restart_internal();
         }
-        self.execute_command(self.mirror_command.as_str());
+        self.execute_command(self.mirror_command.format(&self.monitor_name));
     }
 
     pub fn internal_monitor(&self) {
         let needs_restart = !self.is_internal_active();
-        self.execute_command(self.enable_internal_monitor_command.as_str());
-        self.execute_command(self.disable_external_monitor_command.as_str());
+        self.execute_command(
+            self.enable_internal_monitor_command
+                .format(&self.monitor_name),
+        );
+        self.execute_command(
+            self.disable_external_monitor_command
+                .format(&self.monitor_name),
+        );
         if needs_restart {
             self.reload_bar();
             self.wallpaper();
@@ -456,7 +465,10 @@ impl HyprDock {
     }
 
     pub fn restart_internal(&self) {
-        self.execute_command(self.enable_internal_monitor_command.as_str());
+        self.execute_command(
+            self.enable_internal_monitor_command
+                .format(&self.monitor_name),
+        );
         self.wallpaper();
         self.reload_bar();
         self.fix_bar();
@@ -467,8 +479,14 @@ impl HyprDock {
             return;
         }
         let needs_restart = !self.is_internal_active();
-        self.execute_command(self.disable_internal_monitor_command.as_str());
-        self.execute_command(self.enable_external_monitor_command.as_str());
+        self.execute_command(
+            self.disable_internal_monitor_command
+                .format(&self.monitor_name),
+        );
+        self.execute_command(
+            self.enable_external_monitor_command
+                .format(&self.monitor_name),
+        );
         if needs_restart {
             self.reload_bar();
             self.wallpaper();
@@ -476,16 +494,16 @@ impl HyprDock {
     }
 
     pub fn wallpaper(&self) {
-        self.execute_command(self.wallpaper_command.as_str());
+        self.execute_command(self.wallpaper_command.format(&self.monitor_name));
     }
 
     pub fn reload_bar(&self) {
-        self.execute_command(self.close_bar_command.as_str());
-        self.execute_command(self.open_bar_command.as_str());
+        self.execute_command(self.close_bar_command.format(&self.monitor_name));
+        self.execute_command(self.open_bar_command.format(&self.monitor_name));
     }
 
     pub fn fix_bar(&self) {
-        self.execute_command(self.reload_bar_command.as_str());
+        self.execute_command(self.reload_bar_command.format(&self.monitor_name));
     }
 
     pub fn add_monitor(&self) {
@@ -497,9 +515,10 @@ impl HyprDock {
     }
 
     pub fn is_internal_active(&self) -> bool {
-        let output =
-            String::from_utf8(self.execute_command_with_output(self.get_monitors_command.as_str()))
-                .unwrap();
+        let output = String::from_utf8(
+            self.execute_command_with_output(self.get_monitors_command.format(&self.monitor_name)),
+        )
+        .unwrap();
         if output.contains(self.monitor_name.as_str()) {
             return true;
         }
@@ -507,9 +526,10 @@ impl HyprDock {
     }
 
     pub fn has_external_monitor(&self) -> bool {
-        let output =
-            String::from_utf8(self.execute_command_with_output(self.get_monitors_command.as_str()))
-                .unwrap();
+        let output = String::from_utf8(
+            self.execute_command_with_output(self.get_monitors_command.format(&self.monitor_name)),
+        )
+        .unwrap();
         if output.contains("ID 1") {
             return true;
         }
