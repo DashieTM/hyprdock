@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use directories_next as dirs;
 use monitors::hypr_monitors::{
-    get_current_monitor_hash, save_hypr_monitor_data, set_hypr_monitors_from_file,
-    try_get_monitor_hash_path,
+    get_all_hypr_monitors, get_current_monitor_hash, save_hypr_monitor_data,
+    set_hypr_monitors_from_file, try_get_monitor_hash_path,
 };
 use once_cell::sync::Lazy;
 use optional_struct::{Applicable, optional_struct};
@@ -30,7 +30,6 @@ use std::{
     path::PathBuf,
     process::{Command, ExitCode},
     thread,
-    time::Duration,
 };
 use toml;
 
@@ -109,7 +108,7 @@ const DEFAULT_CONFIG: Lazy<OptionalHyprDock> = Lazy::new(|| {
         )),
         extend_command: Some(HyprdockCommand::new(
             fetcher,
-            &["keyword", "monitor", ",preferred,1920x0,1"],
+            &["keyword", "monitor", ",preferred,auto,1"],
         )),
         mirror_command: Some(HyprdockCommand::new(
             fetcher,
@@ -294,26 +293,16 @@ fn parse_config(path: &str) -> HyprDock {
 
 impl HyprDock {
     pub fn execute_command(&self, command: HyprdockCommand) {
-        let base = command.base.trim();
+        let base = command.base.trim().to_string();
         if base.is_empty() {
             return;
         }
-        Command::new(base)
-            .args(command.args)
-            .spawn()
-            .expect("Could not parse command, please check your toml");
-    }
-
-    pub fn execute_command_with_output(&self, command: HyprdockCommand) -> Vec<u8> {
-        let base = command.base.trim();
-        if base.is_empty() {
-            return Vec::new();
-        }
-        Command::new(base)
-            .args(command.args)
-            .output()
-            .expect("Could not parse command, please check your toml")
-            .stdout
+        thread::spawn(move || {
+            Command::new(base)
+                .args(command.args)
+                .spawn()
+                .expect("Could not parse command, please check your toml");
+        });
     }
 
     pub fn handle_close(&self) {
@@ -333,7 +322,6 @@ impl HyprDock {
             } else {
                 self.external_monitor();
             }
-            thread::sleep(Duration::from_millis(1000));
             self.wallpaper();
             self.reload_bar();
         } else {
@@ -351,28 +339,19 @@ impl HyprDock {
             self.enable_internal_monitor_command
                 .format(&self.monitor_name),
         );
-        if !self.has_external_monitor() {
-            self.internal_monitor();
-            self.wallpaper();
-            self.reload_bar();
-            self.fix_bar();
-            return;
+        let path = try_get_monitor_hash_path(self.monitor_config_path.clone(), &monitor_hash);
+        if path.is_some() {
+            set_hypr_monitors_from_file(
+                self.monitor_config_path.clone(),
+                None,
+                Some(&monitor_hash),
+            );
         } else {
-            let path = try_get_monitor_hash_path(self.monitor_config_path.clone(), &monitor_hash);
-            if path.is_some() {
-                set_hypr_monitors_from_file(
-                    self.monitor_config_path.clone(),
-                    None,
-                    Some(&monitor_hash),
-                );
-            } else {
-                self.internal_monitor();
-                self.add_monitor();
-            }
-            self.wallpaper();
-            self.reload_bar();
-            self.fix_bar();
+            self.add_monitor();
         }
+        self.wallpaper();
+        self.reload_bar();
+        self.fix_bar();
     }
 
     pub fn handle_event(&self, event: &str) {
@@ -528,23 +507,21 @@ impl HyprDock {
     }
 
     pub fn is_internal_active(&self) -> bool {
-        let output = String::from_utf8(
-            self.execute_command_with_output(self.get_monitors_command.format(&self.monitor_name)),
-        )
-        .unwrap();
-        if output.contains(self.monitor_name.as_str()) {
-            return true;
+        let current_monitors = get_all_hypr_monitors();
+        for monitor in current_monitors {
+            if monitor.name == self.monitor_name && !monitor.disabled {
+                return true;
+            }
         }
         false
     }
 
     pub fn has_external_monitor(&self) -> bool {
-        let output = String::from_utf8(
-            self.execute_command_with_output(self.get_monitors_command.format(&self.monitor_name)),
-        )
-        .unwrap();
-        if output.contains("ID 1") {
-            return true;
+        let current_monitors = get_all_hypr_monitors();
+        for monitor in current_monitors {
+            if monitor.name != self.monitor_name && !monitor.disabled {
+                return true;
+            }
         }
         false
     }

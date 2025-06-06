@@ -15,9 +15,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-use crate::{monitors::hypr_monitors::save_hypr_monitor_data, HyprDock};
-use gtk::{self, gdk, glib::Propagation, StyleContext, Window};
-pub use gtk::{prelude::*, Button};
+use crate::{HyprDock, monitors::hypr_monitors::save_hypr_monitor_data};
+use gtk::{self, StyleContext, Window, gdk, glib::Propagation};
+pub use gtk::{Button, prelude::*};
 use gtk_layer_shell::LayerShell;
 use std::rc::Rc;
 

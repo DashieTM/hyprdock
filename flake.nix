@@ -25,6 +25,7 @@
             rustc
             clippy
             rust-analyzer
+            rustfmt
           ];
         };
         packages = let
