@@ -16,7 +16,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 use std::{
-    collections::hash_map::DefaultHasher, fs::File, hash::Hash, hash::Hasher, io::Write,
+    collections::hash_map::DefaultHasher,
+    fs::File,
+    hash::{Hash, Hasher},
+    io::Write,
+    path::PathBuf,
     process::Command,
 };
 
@@ -100,27 +104,29 @@ pub fn save_hypr_monitor_data(path: String, name: Option<&String>, hash: Option<
         .expect("Could not write to file");
 }
 
+pub fn try_get_monitor_hash_path(base_path: String, hash: &String) -> Option<PathBuf> {
+    let path = PathBuf::from(base_path + "/monitor_configs" + &hash + ".json");
+    if path.is_file() { Some(path) } else { None }
+}
+
 pub fn import_hypr_data(
-    path: String,
+    base_path: String,
     name: Option<&String>,
     hash: Option<&String>,
-) -> Vec<Monitor> {
+) -> Option<Vec<Monitor>> {
     use std::io::prelude::*;
     let monitor_name = &get_current_monitor_hash(name);
     let monitor_hash = hash.unwrap_or(monitor_name);
-    let mut file = File::open(path + "monitor_configs/" + monitor_hash + ".json")
-        .expect("Could not read file");
+    let path = try_get_monitor_hash_path(base_path, monitor_hash)?;
+    let mut file = File::open(path).ok()?;
     let mut contents = String::new();
-    file.read_to_string(&mut contents)
-        .expect("Could not read data from file");
-
-    let hyprmonitors: Vec<HyprMonitor> =
-        serde_json::from_str(contents.as_str()).expect("Could not parse json");
+    file.read_to_string(&mut contents).ok()?;
+    let hyprmonitors: Vec<HyprMonitor> = serde_json::from_str(contents.as_str()).ok()?;
     let mut monitors = Vec::new();
     for monitor in hyprmonitors {
         monitors.push(monitor.convert_data());
     }
-    monitors
+    Some(monitors)
 }
 
 pub fn set_hypr_monitors_from_hyprvec(monitors: Vec<HyprMonitor>) {
@@ -131,9 +137,11 @@ pub fn set_hypr_monitors_from_hyprvec(monitors: Vec<HyprMonitor>) {
 }
 
 pub fn set_hypr_monitors_from_file(path: String, name: Option<&String>, hash: Option<&String>) {
-    let monitors = import_hypr_data(path, name, hash);
-    for monitor in monitors {
-        monitor.enable_hypr_monitor();
+    let monitors_opt = import_hypr_data(path, name, hash);
+    if let Some(monitors) = monitors_opt {
+        for monitor in monitors {
+            monitor.enable_hypr_monitor();
+        }
     }
 }
 

@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 use directories_next as dirs;
 use monitors::hypr_monitors::{
     get_current_monitor_hash, save_hypr_monitor_data, set_hypr_monitors_from_file,
+    try_get_monitor_hash_path,
 };
 use once_cell::sync::Lazy;
 use optional_struct::{Applicable, optional_struct};
@@ -322,8 +323,8 @@ impl HyprDock {
                     .format(&self.monitor_name),
             );
             let monitor_hash = get_current_monitor_hash(None);
-            let path = PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
-            if path.exists() {
+            let path = try_get_monitor_hash_path(self.monitor_config_path.clone(), &monitor_hash);
+            if path.is_some() {
                 set_hypr_monitors_from_file(
                     self.monitor_config_path.clone(),
                     None,
@@ -357,8 +358,8 @@ impl HyprDock {
             self.fix_bar();
             return;
         } else {
-            let path = PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
-            if path.exists() {
+            let path = try_get_monitor_hash_path(self.monitor_config_path.clone(), &monitor_hash);
+            if path.is_some() {
                 set_hypr_monitors_from_file(
                     self.monitor_config_path.clone(),
                     None,
@@ -381,14 +382,10 @@ impl HyprDock {
             _ if event.contains("VIDEOOUT plug") => {
                 let monitor_hash = get_current_monitor_hash(None);
                 let path =
-                    PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
-                if !path.exists() {
+                    try_get_monitor_hash_path(self.monitor_config_path.clone(), &monitor_hash);
+                if path.is_none() {
                     self.add_monitor();
-                    save_hypr_monitor_data(
-                        self.monitor_config_path.clone(),
-                        None,
-                        Some(&monitor_hash),
-                    );
+                    save_hypr_monitor_data(self.monitor_config_path.clone(), None, None);
                 } else {
                     set_hypr_monitors_from_file(
                         self.monitor_config_path.clone(),
@@ -403,8 +400,8 @@ impl HyprDock {
             _ if event.contains("VIDEOOUT unplug") => {
                 let monitor_hash = get_current_monitor_hash(None);
                 let path =
-                    PathBuf::from(self.monitor_config_path.clone() + &monitor_hash + ".json");
-                if path.exists() {
+                    try_get_monitor_hash_path(self.monitor_config_path.clone(), &monitor_hash);
+                if path.is_some() {
                     set_hypr_monitors_from_file(
                         self.monitor_config_path.clone(),
                         None,
