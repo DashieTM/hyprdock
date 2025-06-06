@@ -1,46 +1,13 @@
 [{
     "id": 0,
-    "name": "DP-1",
-    "description": "ASUSTek COMPUTER INC XG349C 0x00000001",
-    "make": "ASUSTek COMPUTER INC",
-    "model": "XG349C",
-    "serial": "0x00000001",
-    "width": 3440,
-    "height": 1440,
-    "refreshRate": 179.99899,
-    "x": 2560,
-    "y": 0,
-    "activeWorkspace": {
-        "id": 2,
-        "name": "2"
-    },
-    "specialWorkspace": {
-        "id": 0,
-        "name": ""
-    },
-    "reserved": [0, 32, 0, 0],
-    "scale": 1.00,
-    "transform": 0,
-    "focused": true,
-    "dpmsStatus": true,
-    "vrr": false,
-    "solitary": "0",
-    "activelyTearing": false,
-    "directScanoutTo": "0",
-    "disabled": false,
-    "currentFormat": "XRGB8888",
-    "mirrorOf": "none",
-    "availableModes": ["3440x1440@180.00Hz","3440x1440@143.85Hz","3440x1440@60.00Hz","3840x2160@60.00Hz","3840x2160@59.94Hz","3840x2160@30.00Hz","3840x2160@29.97Hz","3840x2160@25.00Hz","3840x2160@24.00Hz","3840x2160@23.98Hz","3440x1440@99.98Hz","3440x1440@84.96Hz","2560x1440@143.97Hz","2560x1080@120.00Hz","2560x1080@119.88Hz","2560x1080@100.00Hz","2560x1080@60.00Hz","2560x1080@59.94Hz","2560x1080@50.00Hz","1920x1200@180.00Hz","1920x1080@60.00Hz","1920x1080@60.00Hz","1920x1080@59.94Hz","1920x1080@50.00Hz","1600x1200@180.00Hz","1680x1050@59.95Hz","1280x1024@75.03Hz","1280x1024@60.02Hz","1440x900@59.89Hz","1280x960@60.00Hz","1280x800@180.00Hz","1152x864@75.00Hz","1280x720@60.00Hz","1280x720@60.00Hz","1280x720@59.94Hz","1280x720@50.00Hz","1440x576@50.00Hz","1440x576@50.00Hz","1024x768@75.03Hz","1024x768@70.07Hz","1024x768@60.00Hz","1440x480@60.00Hz","1440x480@60.00Hz","1440x480@59.94Hz","1440x480@59.94Hz","800x600@75.00Hz","800x600@72.19Hz","800x600@60.32Hz","800x600@56.25Hz","720x480@60.00Hz","720x480@60.00Hz","720x480@59.94Hz","720x480@59.94Hz","640x480@75.00Hz","640x480@72.81Hz","640x480@66.67Hz","640x480@60.00Hz","640x480@59.94Hz","640x480@59.94Hz","720x400@70.08Hz"]
-},{
-    "id": 1,
-    "name": "DP-2",
-    "description": "ASUSTek COMPUTER INC ROG PG278QR #ASOWXFZDWU/d",
-    "make": "ASUSTek COMPUTER INC",
-    "model": "ROG PG278QR",
-    "serial": "#ASOWXFZDWU/d",
-    "width": 2560,
-    "height": 1440,
-    "refreshRate": 165.00000,
+    "name": "eDP-1",
+    "description": "Samsung Display Corp. 0x4174",
+    "make": "Samsung Display Corp.",
+    "model": "0x4174",
+    "serial": "",
+    "width": 3840,
+    "height": 2400,
+    "refreshRate": 60.00000,
     "x": 0,
     "y": 0,
     "activeWorkspace": {
@@ -52,9 +19,9 @@
         "name": ""
     },
     "reserved": [0, 0, 0, 0],
-    "scale": 1.00,
+    "scale": 2.00,
     "transform": 0,
-    "focused": false,
+    "focused": true,
     "dpmsStatus": true,
     "vrr": false,
     "solitary": "0",
@@ -63,38 +30,5 @@
     "disabled": false,
     "currentFormat": "XRGB8888",
     "mirrorOf": "none",
-    "availableModes": ["2560x1440@59.95Hz","2560x1440@165.00Hz","2560x1440@144.00Hz","2560x1440@120.00Hz","2560x1440@99.95Hz","2560x1440@84.98Hz","2560x1440@23.97Hz","1920x1200@59.95Hz","1920x1080@59.95Hz","1600x1200@59.95Hz","1680x1050@59.95Hz","1280x1024@59.95Hz","1440x900@59.95Hz","1280x800@59.95Hz","1280x720@59.95Hz","1024x768@60.00Hz","800x600@60.32Hz","640x480@60.00Hz","640x480@59.94Hz"]
-},{
-    "id": 2,
-    "name": "DP-3",
-    "description": "ASUSTek COMPUTER INC VG278 K3LMQS112030",
-    "make": "ASUSTek COMPUTER INC",
-    "model": "VG278",
-    "serial": "K3LMQS112030",
-    "width": 1920,
-    "height": 1080,
-    "refreshRate": 144.00101,
-    "x": 6000,
-    "y": 0,
-    "activeWorkspace": {
-        "id": 3,
-        "name": "3"
-    },
-    "specialWorkspace": {
-        "id": 0,
-        "name": ""
-    },
-    "reserved": [0, 0, 0, 0],
-    "scale": 1.00,
-    "transform": 1,
-    "focused": false,
-    "dpmsStatus": true,
-    "vrr": false,
-    "solitary": "0",
-    "activelyTearing": false,
-    "directScanoutTo": "0",
-    "disabled": false,
-    "currentFormat": "XRGB8888",
-    "mirrorOf": "none",
-    "availableModes": ["1920x1080@60.00Hz","1920x1080@144.00Hz","1920x1080@119.98Hz","1920x1080@99.93Hz","1920x1080@84.91Hz","1920x1080@60.00Hz","1920x1080@59.94Hz","1920x1080@50.00Hz","1680x1050@59.95Hz","1280x1024@75.03Hz","1280x1024@60.02Hz","1440x900@59.89Hz","1280x960@60.00Hz","1280x800@59.81Hz","1152x864@75.00Hz","1280x720@60.00Hz","1280x720@60.00Hz","1280x720@59.94Hz","1280x720@50.00Hz","1024x768@75.03Hz","1024x768@70.07Hz","1024x768@60.00Hz","832x624@74.55Hz","800x600@75.00Hz","800x600@72.19Hz","800x600@60.32Hz","800x600@56.25Hz","720x576@50.00Hz","720x576@50.00Hz","720x480@60.00Hz","720x480@60.00Hz","720x480@59.94Hz","720x480@59.94Hz","640x480@75.00Hz","640x480@66.67Hz","640x480@60.00Hz","640x480@59.94Hz","640x480@59.94Hz","720x400@70.08Hz"]
+    "availableModes": ["3840x2400@60.00Hz"]
 }]

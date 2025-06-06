@@ -30,6 +30,7 @@ pub struct Monitor {
     pub scale: String,
     pub transform: String,
     pub vrr: bool,
+    pub disabled: bool,
 }
 
 impl Monitor {
@@ -70,7 +71,9 @@ impl Monitor {
 #[test]
 fn monitor_import() {
     use std::{fs::File, io::Write};
-    let output = Command::new("hyprctl").args(["-j", "monitors"]).output();
+    let output = Command::new("hyprctl")
+        .args(["-j", "monitors", "all"])
+        .output();
 
     if output.is_err() {
         println!("hyprctl not found, skipping test");

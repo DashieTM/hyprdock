@@ -45,6 +45,7 @@ pub struct HyprMonitor {
     scale: f64,
     transform: i64,
     vrr: bool,
+    disabled: bool,
 }
 
 impl Hash for HyprMonitor {
@@ -70,8 +71,27 @@ impl HyprMonitor {
             scale: self.scale.to_string(),
             transform: self.transform.to_string(),
             vrr: self.vrr,
+            disabled: self.disabled,
         }
     }
+}
+
+pub fn get_all_hypr_monitors() -> Vec<Monitor> {
+    let output = Command::new("hyprctl")
+        .args(["-j", "monitors", "all"])
+        .output()
+        .expect("Could not save output to file")
+        .stdout;
+    let monitors: Vec<HyprMonitor> = serde_json::from_str(
+        String::from_utf8(output)
+            .expect("Could not convert output to string")
+            .as_str(),
+    )
+    .expect("Could not parse json");
+    monitors
+        .into_iter()
+        .map(|this| this.convert_data())
+        .collect::<Vec<_>>()
 }
 
 pub fn get_hypr_monitor_info() -> Vec<u8> {
