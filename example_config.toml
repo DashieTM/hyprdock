@@ -4,6 +4,10 @@ monitor_name = "eDP-1"
 default_external_mode = "extend"
 css_string = ""
 
+[init_command]
+base = ""
+args = []
+
 [open_bar_command]
 base = "ironbar"
 args = []

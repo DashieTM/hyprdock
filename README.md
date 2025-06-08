@@ -32,6 +32,10 @@ Location: `$XDG_CONFIG_HOME/hyprdock/config.toml`
 default_external_mode = "extend"
 css_string = ""
 
+[init_command]
+base = ""
+args = []
+
 [open_bar_command]
 base = "ironbar"
 args = []
@@ -156,6 +160,8 @@ services.logind.lidSwitch = "ignore";
 
 ### When are specific functions called?
 
+- init_command => Runs at the start of hyprdock server
+    - especially usefull for NixOS rebuilds to apply a specific configuration again
 - open_bar_command => used to open new bars on new monitors
 - close_bar_command => used to close a bugged eww bar
 - reload_bar_command => used to remove graphical errors with eww after re-enabling internal monitor
