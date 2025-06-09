@@ -16,9 +16,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 use directories_next as dirs;
-use monitors::hypr_monitors::{
-    get_all_hypr_monitors, get_current_monitor_hash, save_hypr_monitor_data,
-    set_hypr_monitors_from_file, try_get_monitor_hash_path,
+use monitors::{
+    Monitor,
+    hypr_monitors::{
+        HyprMonitor, get_all_hypr_monitors, get_current_monitor_hash, save_hypr_monitor_data,
+        set_hypr_monitors_from_file, try_get_monitor_hash_path,
+    },
 };
 use once_cell::sync::Lazy;
 use optional_struct::{Applicable, optional_struct};
@@ -132,7 +135,7 @@ fn default_config_string() -> String {
 
 #[optional_struct]
 #[derive(Deserialize, Serialize, Clone)]
-struct HyprDock {
+struct HyprDockConfig {
     monitor_name: String,
     default_external_mode: String,
     css_string: String,
@@ -151,6 +154,12 @@ struct HyprDock {
     extend_command: HyprdockCommand,
     mirror_command: HyprdockCommand,
     wallpaper_command: HyprdockCommand,
+}
+
+struct Hyprdock {
+    config: HyprDockConfig,
+    main_monitor: Monitor,
+    external_monitors: Vec<Monitor>,
 }
 
 fn main() -> ExitCode {
@@ -279,7 +288,7 @@ fn print_help() {
     );
 }
 
-fn parse_config(path: &str) -> HyprDock {
+fn parse_config(path: &str) -> HyprDockConfig {
     let contents = match fs::read_to_string(path) {
         Ok(c) => c,
         Err(_) => default_config_string(),
@@ -291,7 +300,7 @@ fn parse_config(path: &str) -> HyprDock {
     parsed_conf.build(DEFAULT_CONFIG.to_owned().try_into().unwrap())
 }
 
-impl HyprDock {
+impl HyprDockConfig {
     pub fn execute_command(&self, command: HyprdockCommand) {
         let base = command.base.trim().to_string();
         if base.is_empty() {
@@ -306,7 +315,7 @@ impl HyprDock {
     }
 
     pub fn handle_close(&self) {
-        if self.has_external_monitor() {
+        if !self.get_external_monitors().is_empty() {
             self.execute_command(
                 self.disable_internal_monitor_command
                     .format(&self.monitor_name),
@@ -332,7 +341,7 @@ impl HyprDock {
 
     pub fn handle_open(&self) {
         let monitor_hash = get_current_monitor_hash(None);
-        if self.is_internal_active() {
+        if self.get_internal_monitor().is_some() {
             return;
         }
         self.execute_command(
@@ -427,21 +436,21 @@ impl HyprDock {
     }
 
     pub fn extend_monitor(&self) {
-        if !self.is_internal_active() {
+        if !self.get_internal_monitor().is_some() {
             self.restart_internal();
         }
         self.execute_command(self.extend_command.format(&self.monitor_name));
     }
 
     pub fn mirror_monitor(&self) {
-        if !self.is_internal_active() {
+        if !self.get_internal_monitor().is_some() {
             self.restart_internal();
         }
         self.execute_command(self.mirror_command.format(&self.monitor_name));
     }
 
     pub fn internal_monitor(&self) {
-        let needs_restart = !self.is_internal_active();
+        let needs_restart = !self.get_internal_monitor().is_some();
         self.execute_command(
             self.enable_internal_monitor_command
                 .format(&self.monitor_name),
@@ -467,10 +476,10 @@ impl HyprDock {
     }
 
     pub fn external_monitor(&self) {
-        if !self.has_external_monitor() {
+        if self.get_external_monitors().is_empty() {
             return;
         }
-        let needs_restart = !self.is_internal_active();
+        let needs_restart = !self.get_internal_monitor().is_some();
         self.execute_command(
             self.disable_internal_monitor_command
                 .format(&self.monitor_name),
@@ -506,23 +515,24 @@ impl HyprDock {
         }
     }
 
-    pub fn is_internal_active(&self) -> bool {
+    pub fn get_internal_monitor(&self) -> Option<Monitor> {
         let current_monitors = get_all_hypr_monitors();
         for monitor in current_monitors {
             if monitor.name == self.monitor_name && !monitor.disabled {
-                return true;
+                return Some(monitor);
             }
         }
-        false
+        None
     }
 
-    pub fn has_external_monitor(&self) -> bool {
+    pub fn get_external_monitors(&self) -> Vec<Monitor> {
+        let mut external_monitors = Vec::new();
         let current_monitors = get_all_hypr_monitors();
         for monitor in current_monitors {
             if monitor.name != self.monitor_name && !monitor.disabled {
-                return true;
+                external_monitors.push(monitor);
             }
         }
-        false
+        external_monitors
     }
 }

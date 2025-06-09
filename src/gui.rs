@@ -15,13 +15,13 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-use crate::{HyprDock, monitors::hypr_monitors::save_hypr_monitor_data};
+use crate::{HyprDockConfig, monitors::hypr_monitors::save_hypr_monitor_data};
 use gtk::{self, StyleContext, Window, gdk, glib::Propagation};
 pub use gtk::{Button, prelude::*};
 use gtk_layer_shell::LayerShell;
 use std::rc::Rc;
 
-impl HyprDock {
+impl HyprDockConfig {
     pub fn run_gui(&self) {
         let dock1 = Rc::new(self.clone());
         let dock2 = Rc::new(self.clone());
